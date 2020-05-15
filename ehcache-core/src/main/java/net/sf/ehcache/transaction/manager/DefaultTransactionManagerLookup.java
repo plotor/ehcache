@@ -1,30 +1,20 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction.manager;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.transaction.TransactionManager;
 
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.transaction.manager.selector.AtomikosSelector;
@@ -36,9 +26,18 @@ import net.sf.ehcache.transaction.manager.selector.NullSelector;
 import net.sf.ehcache.transaction.manager.selector.Selector;
 import net.sf.ehcache.transaction.manager.selector.WeblogicSelector;
 import net.sf.ehcache.transaction.xa.EhcacheXAResource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import javax.transaction.TransactionManager;
 
 /**
  * Default {@link TransactionManagerLookup} implementation, that will be used by an {@link net.sf.ehcache.Cache#initialise() initializing}
@@ -67,12 +66,14 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
     private final Lock lock = new ReentrantLock();
     private final List<EhcacheXAResource> uninitializedEhcacheXAResources = new ArrayList<EhcacheXAResource>();
     private volatile boolean initialized = false;
+
+    /** Transaction Manager selector */
     private volatile Selector selector;
 
     private final JndiSelector defaultJndiSelector = new GenericJndiSelector();
 
     private final Selector[] transactionManagerSelectors;
-    
+
     public DefaultTransactionManagerLookup() {
         transactionManagerSelectors = new Selector[] {
                 defaultJndiSelector,
@@ -80,12 +81,13 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
                 new WeblogicSelector(),
                 new BitronixSelector(),
                 new AtomikosSelector()
-            };
+        };
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void init() {
         if (!initialized) {
             lock.lock();
@@ -94,7 +96,7 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
                 while (iterator.hasNext()) {
                     if (getTransactionManager() == null) {
                         throw new CacheException("No Transaction Manager could be located, cannot initialize DefaultTransactionManagerLookup." +
-                                                 " Caches which registered an XAResource: " + getUninitializedXAResourceCacheNames());
+                                " Caches which registered an XAResource: " + getUninitializedXAResourceCacheNames());
                     }
                     EhcacheXAResource resource = iterator.next();
                     selector.registerResource(resource, true);
@@ -120,6 +122,7 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
      *
      * @return TransactionManager
      */
+    @Override
     public TransactionManager getTransactionManager() {
         if (selector == null) {
             lock.lock();
@@ -134,6 +137,9 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
         return selector.getTransactionManager();
     }
 
+    /**
+     * Select the transaction manager selector by order
+     */
     private void lookupTransactionManager() {
         for (Selector s : transactionManagerSelectors) {
             TransactionManager transactionManager = s.getTransactionManager();
@@ -150,6 +156,7 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
     /**
      * {@inheritDoc}
      */
+    @Override
     public void register(EhcacheXAResource resource, boolean forRecovery) {
         if (initialized) {
             selector.registerResource(resource, forRecovery);
@@ -166,6 +173,7 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
     /**
      * {@inheritDoc}
      */
+    @Override
     public void unregister(EhcacheXAResource resource, boolean forRecovery) {
         if (initialized) {
             selector.unregisterResource(resource, forRecovery);
@@ -189,6 +197,7 @@ public class DefaultTransactionManagerLookup implements TransactionManagerLookup
     /**
      * {@inheritDoc}
      */
+    @Override
     public void setProperties(Properties properties) {
         if (properties != null) {
             String jndiName = properties.getProperty("jndiName");

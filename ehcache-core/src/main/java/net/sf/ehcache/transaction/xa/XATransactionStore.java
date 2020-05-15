@@ -1,20 +1,22 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction.xa;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import net.sf.ehcache.CacheEntry;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
@@ -36,7 +38,6 @@ import net.sf.ehcache.transaction.xa.commands.StoreRemoveCommand;
 import net.sf.ehcache.util.LargeSet;
 import net.sf.ehcache.util.SetAsList;
 import net.sf.ehcache.writer.CacheWriterManager;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.statistics.observer.OperationObserver;
@@ -46,14 +47,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
 import javax.transaction.RollbackException;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * @author Ludovic Orban
@@ -82,16 +80,21 @@ public class XATransactionStore extends AbstractTransactionStore {
 
     /**
      * Constructor
+     *
      * @param transactionManagerLookup the transaction manager lookup implementation
      * @param softLockManager the soft lock manager
      * @param transactionIdFactory the transaction ID factory
      * @param cache the cache
      * @param store the underlying store
      */
-    public XATransactionStore(TransactionManagerLookup transactionManagerLookup, SoftLockManager softLockManager,
-                              TransactionIDFactory transactionIdFactory, Ehcache cache, Store store, ElementValueComparator comparator) {
-      super(store);
-      this.transactionManagerLookup = transactionManagerLookup;
+    public XATransactionStore(TransactionManagerLookup transactionManagerLookup,
+                              SoftLockManager softLockManager,
+                              TransactionIDFactory transactionIdFactory,
+                              Ehcache cache,
+                              Store store,
+                              ElementValueComparator comparator) {
+        super(store);
+        this.transactionManagerLookup = transactionManagerLookup;
         this.transactionIdFactory = transactionIdFactory;
         this.comparator = comparator;
         if (transactionManagerLookup.getTransactionManager() == null) {
@@ -101,8 +104,16 @@ public class XATransactionStore extends AbstractTransactionStore {
         this.cache = cache;
 
         // this xaresource is for initial registration and recovery
-        this.recoveryResource = new EhcacheXAResourceImpl(cache, underlyingStore, transactionManagerLookup, softLockManager, transactionIdFactory,
-                comparator, commitObserver, rollbackObserver, recoveryObserver);
+        this.recoveryResource = new EhcacheXAResourceImpl(
+                cache,
+                underlyingStore,
+                transactionManagerLookup,
+                softLockManager,
+                transactionIdFactory,
+                comparator,
+                commitObserver,
+                rollbackObserver,
+                recoveryObserver);
         transactionManagerLookup.register(recoveryResource, true);
     }
 
@@ -122,6 +133,7 @@ public class XATransactionStore extends AbstractTransactionStore {
 
     /**
      * Get or create the XAResource of this XA store
+     *
      * @return the EhcacheXAResource of this store
      * @throws SystemException when something goes wrong with the transaction manager
      */
@@ -200,9 +212,11 @@ public class XATransactionStore extends AbstractTransactionStore {
             this.transaction = transaction;
         }
 
+        @Override
         public void beforeCompletion() {
         }
 
+        @Override
         public void afterCompletion(final int status) {
             transactionToTimeoutMap.remove(transaction);
         }
@@ -219,9 +233,11 @@ public class XATransactionStore extends AbstractTransactionStore {
             this.transaction = transaction;
         }
 
+        @Override
         public void beforePrepare(EhcacheXAResource xaResource) {
         }
 
+        @Override
         public void afterCommitOrRollback(EhcacheXAResource xaResource) {
             transactionToXAResourceMap.remove(transaction);
         }
@@ -233,14 +249,15 @@ public class XATransactionStore extends AbstractTransactionStore {
      */
     private final class UnregisterXAResource implements XAExecutionListener {
 
+        @Override
         public void beforePrepare(EhcacheXAResource xaResource) {
         }
 
+        @Override
         public void afterCommitOrRollback(EhcacheXAResource xaResource) {
             transactionManagerLookup.unregister(xaResource, false);
         }
     }
-
 
     /**
      * @return milliseconds left before timeout
@@ -292,6 +309,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element get(Object key) {
         LOG.debug("cache {} get {}", cache.getName(), key);
         XATransactionContext context = getTransactionContext();
@@ -307,10 +325,10 @@ public class XATransactionStore extends AbstractTransactionStore {
         return element;
     }
 
-
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element getQuiet(Object key) {
         LOG.debug("cache {} getQuiet {}", cache.getName(), key);
         XATransactionContext context = getTransactionContext();
@@ -329,6 +347,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getSize() {
         LOG.debug("cache {} getSize", cache.getName());
         XATransactionContext context = getOrCreateTransactionContext();
@@ -339,6 +358,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getTerracottaClusteredSize() {
         try {
             Transaction transaction = transactionManagerLookup.getTransactionManager().getTransaction();
@@ -358,6 +378,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsKey(Object key) {
         LOG.debug("cache {} containsKey", cache.getName(), key);
         XATransactionContext context = getOrCreateTransactionContext();
@@ -367,6 +388,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public List getKeys() {
         LOG.debug("cache {} getKeys", cache.getName());
         XATransactionContext context = getOrCreateTransactionContext();
@@ -386,7 +408,6 @@ public class XATransactionStore extends AbstractTransactionStore {
         keys.removeAll(context.getRemovedKeys());
         return new SetAsList<Object>(keys);
     }
-
 
     private Element getFromUnderlyingStore(final Object key) {
         while (true) {
@@ -463,6 +484,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean put(Element element) throws CacheException {
         LOG.debug("cache {} put {}", cache.getName(), element);
         // this forces enlistment so the XA transaction timeout can be propagated to the XA resource
@@ -475,6 +497,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean putWithWriter(Element element, CacheWriterManager writerManager) throws CacheException {
         LOG.debug("cache {} putWithWriter {}", cache.getName(), element);
         // this forces enlistment so the XA transaction timeout can be propagated to the XA resource
@@ -505,10 +528,10 @@ public class XATransactionStore extends AbstractTransactionStore {
         return isNull;
     }
 
-
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element remove(Object key) {
         LOG.debug("cache {} remove {}", cache.getName(), key);
         // this forces enlistment so the XA transaction timeout can be propagated to the XA resource
@@ -527,6 +550,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element removeWithWriter(Object key, CacheWriterManager writerManager) throws CacheException {
         LOG.debug("cache {} removeWithWriter {}", cache.getName(), key);
         // this forces enlistment so the XA transaction timeout can be propagated to the XA resource
@@ -544,6 +568,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void removeAll() throws CacheException {
         LOG.debug("cache {} removeAll", cache.getName());
         List keys = getKeys();
@@ -555,6 +580,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element putIfAbsent(Element element) throws NullPointerException {
         LOG.debug("cache {} putIfAbsent {}", cache.getName(), element);
         XATransactionContext context = getOrCreateTransactionContext();
@@ -571,6 +597,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element removeElement(Element element, ElementValueComparator comparator) throws NullPointerException {
         LOG.debug("cache {} removeElement {}", cache.getName(), element);
         XATransactionContext context = getOrCreateTransactionContext();
@@ -587,6 +614,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean replace(Element old, Element element, ElementValueComparator comparator)
             throws NullPointerException, IllegalArgumentException {
         LOG.debug("cache {} replace2 {}", cache.getName(), element);
@@ -605,6 +633,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element replace(Element element) throws NullPointerException {
         LOG.debug("cache {} replace1 {}", cache.getName(), element);
         XATransactionContext context = getOrCreateTransactionContext();

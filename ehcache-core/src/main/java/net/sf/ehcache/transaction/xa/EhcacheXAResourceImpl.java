@@ -1,18 +1,19 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction.xa;
 
 import net.sf.ehcache.CacheException;
@@ -29,7 +30,6 @@ import net.sf.ehcache.transaction.manager.TransactionManagerLookup;
 import net.sf.ehcache.transaction.xa.commands.Command;
 import net.sf.ehcache.transaction.xa.processor.XARequest;
 import net.sf.ehcache.transaction.xa.processor.XARequestProcessor;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.statistics.observer.OperationObserver;
@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -58,6 +57,18 @@ import javax.transaction.xa.Xid;
  * @author Ludovic Orban
  */
 public class EhcacheXAResourceImpl implements EhcacheXAResource {
+
+    /*
+     * Global transactions support is implemented at the Store level, through XATransactionStore and JtaLocalTransactionStore.
+     * The former decorates the underlying MemoryStore implementation, augmenting it with transaction isolation and two-phase
+     * commit support through an <XAResouce> implementation. The latter decorates a LocalTransactionStore-decorated cache to
+     * make it controllable by the standard JTA API instead of the proprietary TransactionController API.
+     *
+     * During its initialization, the cache does a lookup of the Transaction Manager using the provided TransactionManagerLookup
+     * implementation. Then, using the TransactionManagerLookup.register(XAResouce), the newly created XAResource is registered.
+     * The store is automatically configured to copy every element read from the cache or written to it. Cache is copy-on-read
+     * and copy-on-write.
+     */
 
     private static final Logger LOG = LoggerFactory.getLogger(EhcacheXAResourceImpl.class.getName());
     private static final long MILLISECOND_PER_SECOND = 1000L;
@@ -80,6 +91,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
 
     /**
      * Constructor
+     *
      * @param cache the cache
      * @param underlyingStore the underlying store
      * @param txnManagerLookup the transaction manager lookup
@@ -87,10 +99,15 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
      * @param transactionIDFactory the transaction ID factory
      * @param comparator the element value comparator
      */
-    public EhcacheXAResourceImpl(Ehcache cache, Store underlyingStore, TransactionManagerLookup txnManagerLookup,
-                                 SoftLockManager softLockManager, TransactionIDFactory transactionIDFactory,
-                                 ElementValueComparator comparator, OperationObserver<XaCommitOutcome> commitObserver,
-                                 OperationObserver<XaRollbackOutcome> rollbackObserver, OperationObserver<XaRecoveryOutcome> recoveryObserver) {
+    public EhcacheXAResourceImpl(Ehcache cache,
+                                 Store underlyingStore,
+                                 TransactionManagerLookup txnManagerLookup,
+                                 SoftLockManager softLockManager,
+                                 TransactionIDFactory transactionIDFactory,
+                                 ElementValueComparator comparator,
+                                 OperationObserver<XaCommitOutcome> commitObserver,
+                                 OperationObserver<XaRollbackOutcome> rollbackObserver,
+                                 OperationObserver<XaRecoveryOutcome> recoveryObserver) {
         this.cache = cache;
         this.underlyingStore = underlyingStore;
         this.transactionIDFactory = transactionIDFactory;
@@ -107,6 +124,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void start(Xid xid, int flag) throws XAException {
         LOG.debug("start [{}] [{}]", xid, prettyPrintXAResourceFlags(flag));
 
@@ -134,6 +152,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void end(Xid xid, int flag) throws XAException {
         LOG.debug("end [{}] [{}]", xid, prettyPrintXAResourceFlags(flag));
 
@@ -161,6 +180,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void forget(Xid xid) throws XAException {
         LOG.debug("forget [{}]", xid);
 
@@ -169,6 +189,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
 
     /**
      * The forget implementation
+     *
      * @param xid a XID
      * @throws XAException when an error occurs
      */
@@ -182,6 +203,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getTransactionTimeout() throws XAException {
         return transactionTimeout;
     }
@@ -189,6 +211,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isSameRM(XAResource xaResource) throws XAException {
         boolean same;
         if (xaResource == this) {
@@ -205,6 +228,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int prepare(Xid xid) throws XAException {
         LOG.debug("prepare [{}]", xid);
 
@@ -216,6 +240,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
 
     /**
      * The prepare implementation
+     *
      * @param xid a XID
      * @return XA_OK or XA_RDONLY
      * @throws XAException when an error occurs
@@ -227,7 +252,6 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
         if (twopcTransactionContext == null) {
             throw new EhcacheXAException("transaction never started: " + xid, XAException.XAER_NOTA);
         }
-
 
         XidTransactionID xidTransactionID = transactionIDFactory.createXidTransactionID(xid, cache);
 
@@ -263,6 +287,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void commit(Xid xid, boolean onePhase) throws XAException {
         LOG.debug("commit [{}] [{}]", xid, onePhase);
 
@@ -274,6 +299,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
 
     /**
      * The commit implementation
+     *
      * @param xid a XID
      * @param onePhase true if onePhase, false otherwise
      * @throws XAException when an error occurs
@@ -312,7 +338,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
             } catch (TransactionIDNotFoundException tnfe) {
                 commitObserver.end(XaCommitOutcome.EXCEPTION);
                 throw new EhcacheXAException("cannot find XID, it might have been duplicated and cleaned up earlier on: " + xid,
-                    XAException.XAER_NOTA, tnfe);
+                        XAException.XAER_NOTA, tnfe);
             } catch (IllegalStateException ise) {
                 commitObserver.end(XaCommitOutcome.EXCEPTION);
                 throw new EhcacheXAException("XID already was rolling back: " + xid, XAException.XAER_RMERR);
@@ -331,7 +357,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
                     LOG.debug("soft lock ID with key '{}' replaced with value in underlying store, ignoring it", softLock.getKey());
                     continue;
                 }
-                SoftLockID softLockId = (SoftLockID)e.getObjectValue();
+                SoftLockID softLockId = (SoftLockID) e.getObjectValue();
                 if (!softLockId.getTransactionID().equals(xidTransactionID)) {
                     LOG.debug("soft lock ID with key '{}' of foreign tx in underlying store, ignoring it", softLock.getKey());
                     continue;
@@ -366,6 +392,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Xid[] recover(int flags) throws XAException {
         recoveryObserver.begin();
         LOG.debug("recover [{}]", prettyPrintXAResourceFlags(flags));
@@ -411,6 +438,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void rollback(Xid xid) throws XAException {
         LOG.debug("rollback [{}]", xid);
 
@@ -419,6 +447,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
 
     /**
      * The rollback implementation
+     *
      * @param xid a XID
      * @throws XAException when an error occurs
      */
@@ -439,7 +468,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
             } catch (TransactionIDNotFoundException tnfe) {
                 rollbackObserver.end(XaRollbackOutcome.EXCEPTION);
                 throw new EhcacheXAException("cannot find XID, it might have been duplicated an cleaned up earlier on: " + xid,
-                    XAException.XAER_NOTA, tnfe);
+                        XAException.XAER_NOTA, tnfe);
             } catch (IllegalStateException ise) {
                 rollbackObserver.end(XaRollbackOutcome.EXCEPTION);
                 throw new EhcacheXAException("XID already was committing: " + xid, XAException.XAER_RMERR);
@@ -457,7 +486,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
                     LOG.debug("soft lock ID with key '{}' replaced with value in underlying store, ignoring it", softLock.getKey());
                     continue;
                 }
-                SoftLockID softLockId = (SoftLockID)e.getObjectValue();
+                SoftLockID softLockId = (SoftLockID) e.getObjectValue();
                 if (!softLockId.getTransactionID().equals(xidTransactionID)) {
                     LOG.debug("soft lock ID with key '{}' of foreign tx in underlying store, ignoring it", softLock.getKey());
                     continue;
@@ -489,6 +518,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean setTransactionTimeout(int timeout) throws XAException {
         if (timeout < 0) {
             throw new EhcacheXAException("timeout must be >= 0, was: " + timeout, XAException.XAER_INVAL);
@@ -504,6 +534,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void addTwoPcExecutionListener(XAExecutionListener listener) {
         listeners.add(listener);
     }
@@ -523,6 +554,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public String getCacheName() {
         return cache.getName();
     }
@@ -530,6 +562,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public XATransactionContext createTransactionContext() throws SystemException, RollbackException {
         XATransactionContext ctx = getCurrentTransactionContext();
         if (ctx != null) {
@@ -559,6 +592,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /**
      * {@inheritDoc}
      */
+    @Override
     public XATransactionContext getCurrentTransactionContext() {
         if (currentXid == null) {
             LOG.debug("getting current TX context of XAResource with current XID [null]: null");
@@ -569,10 +603,8 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
         return xaTransactionContext;
     }
 
-
     private static String prettyPrintXAResourceFlags(int flags) {
         StringBuilder sb = new StringBuilder();
-
 
         if ((flags & XAResource.TMENDRSCAN) == XAResource.TMENDRSCAN) {
             if (sb.length() > 0) {

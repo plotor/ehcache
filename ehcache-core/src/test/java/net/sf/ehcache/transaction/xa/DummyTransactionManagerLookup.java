@@ -1,18 +1,19 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction.xa;
 
 import net.sf.ehcache.transaction.manager.TransactionManagerLookup;
@@ -20,7 +21,6 @@ import net.sf.ehcache.transaction.manager.TransactionManagerLookup;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.InvalidTransactionException;
@@ -40,21 +40,26 @@ public class DummyTransactionManagerLookup implements TransactionManagerLookup {
 
     private static DummyTransactionManager transactionManager = new DummyTransactionManager();
 
+    @Override
     public void init() {
 
     }
 
+    @Override
     public TransactionManager getTransactionManager() {
         return transactionManager;
     }
 
+    @Override
     public synchronized void register(EhcacheXAResource resource, boolean forRecovery) {
 
     }
 
+    @Override
     public synchronized void unregister(EhcacheXAResource resource, boolean forRecovery) {
     }
 
+    @Override
     public void setProperties(Properties properties) {
     }
 
@@ -96,34 +101,43 @@ public class DummyTransactionManagerLookup implements TransactionManagerLookup {
         public DummyTransactionManager() {
         }
 
+        @Override
         public void begin() throws NotSupportedException, SystemException {
             testTransaction = new DummyTransaction(txIdGenerator.incrementAndGet());
         }
 
+        @Override
         public void commit() throws HeuristicMixedException, HeuristicRollbackException, IllegalStateException, RollbackException, SecurityException, SystemException {
         }
 
+        @Override
         public int getStatus() throws SystemException {
             return 0;
         }
 
+        @Override
         public Transaction getTransaction() throws SystemException {
             return testTransaction;
         }
 
+        @Override
         public void resume(Transaction transaction) throws IllegalStateException, InvalidTransactionException, SystemException {
             testTransaction = (DummyTransaction) transaction;
         }
 
+        @Override
         public void rollback() throws IllegalStateException, SecurityException, SystemException {
         }
 
+        @Override
         public void setRollbackOnly() throws IllegalStateException, SystemException {
         }
 
+        @Override
         public void setTransactionTimeout(int i) throws SystemException {
         }
 
+        @Override
         public Transaction suspend() throws SystemException {
             DummyTransaction suspendedTx = testTransaction;
             testTransaction = null;
@@ -153,27 +167,34 @@ public class DummyTransactionManagerLookup implements TransactionManagerLookup {
             return (int) id;
         }
 
+        @Override
         public void commit() throws HeuristicMixedException, HeuristicRollbackException, RollbackException, SecurityException, SystemException {
         }
 
+        @Override
         public boolean delistResource(XAResource xaResource, int i) throws IllegalStateException, SystemException {
             return true;
         }
 
+        @Override
         public boolean enlistResource(XAResource xaResource) throws IllegalStateException, RollbackException, SystemException {
             return true;
         }
 
+        @Override
         public int getStatus() throws SystemException {
             return 0;
         }
 
+        @Override
         public void registerSynchronization(Synchronization synchronization) throws IllegalStateException, RollbackException, SystemException {
         }
 
+        @Override
         public void rollback() throws IllegalStateException, SystemException {
         }
 
+        @Override
         public void setRollbackOnly() throws IllegalStateException, SystemException {
         }
     }
@@ -195,14 +216,17 @@ public class DummyTransactionManagerLookup implements TransactionManagerLookup {
             this.bqual = xid.getBranchQualifier();
         }
 
+        @Override
         public int getFormatId() {
             return formatId;
         }
 
+        @Override
         public byte[] getGlobalTransactionId() {
             return gtrid;
         }
 
+        @Override
         public byte[] getBranchQualifier() {
             return bqual;
         }

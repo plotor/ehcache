@@ -1,18 +1,19 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction.local;
 
 import net.sf.ehcache.CacheEntry;
@@ -30,14 +31,12 @@ import net.sf.ehcache.transaction.xa.XAExecutionListener;
 import net.sf.ehcache.transaction.xa.XATransactionContext;
 import net.sf.ehcache.util.lang.VicariousThreadLocal;
 import net.sf.ehcache.writer.CacheWriterManager;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.transaction.RollbackException;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
@@ -143,10 +142,12 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
             this.transactionId = transactionId;
         }
 
+        @Override
         public void beforeCompletion() {
             //
         }
 
+        @Override
         public void afterCompletion(int status) {
             JtaLocalTransactionStore.BOUND_JTA_TRANSACTIONS.remove();
             if (status == javax.transaction.Status.STATUS_COMMITTED) {
@@ -188,62 +189,76 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
             this.transactionManagerLookup = transactionManagerLookup;
         }
 
+        @Override
         public void commit(Xid xid, boolean onePhase) throws XAException {
             transactionController.commit(true);
             JtaLocalTransactionStore.BOUND_JTA_TRANSACTIONS.remove();
             transactionManagerLookup.unregister(this, false);
         }
 
+        @Override
         public void end(Xid xid, int flag) throws XAException {
             //
         }
 
+        @Override
         public void forget(Xid xid) throws XAException {
             //
         }
 
+        @Override
         public int getTransactionTimeout() throws XAException {
             return 0;
         }
 
+        @Override
         public boolean isSameRM(XAResource xaResource) throws XAException {
             return xaResource == this;
         }
 
+        @Override
         public int prepare(Xid xid) throws XAException {
             return XA_OK;
         }
 
+        @Override
         public Xid[] recover(int flags) throws XAException {
             return new Xid[0];
         }
 
+        @Override
         public void rollback(Xid xid) throws XAException {
             transactionController.rollback();
             JtaLocalTransactionStore.BOUND_JTA_TRANSACTIONS.remove();
             transactionManagerLookup.unregister(this, false);
         }
 
+        @Override
         public boolean setTransactionTimeout(int timeout) throws XAException {
             return false;
         }
 
+        @Override
         public void start(Xid xid, int flag) throws XAException {
             //
         }
 
+        @Override
         public void addTwoPcExecutionListener(XAExecutionListener listener) {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public String getCacheName() {
             return transactionId.toString();
         }
 
+        @Override
         public XATransactionContext createTransactionContext() throws SystemException, RollbackException {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public XATransactionContext getCurrentTransactionContext() {
             throw new UnsupportedOperationException();
         }
@@ -265,7 +280,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
 
     @Override
     public Element getOldElement(Object key) {
-        return ((AbstractTransactionStore)underlyingStore).getOldElement(key);
+        return ((AbstractTransactionStore) underlyingStore).getOldElement(key);
     }
 
     /* transactional methods */
@@ -273,6 +288,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean put(Element element) throws CacheException {
         registerInJtaContext();
         try {
@@ -300,11 +316,13 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean putWithWriter(final Element element, final CacheWriterManager writerManager) throws CacheException {
         registerInJtaContext();
         try {
             boolean put = underlyingStore.put(element);
             transactionManager.getTransaction().registerSynchronization(new Synchronization() {
+                @Override
                 public void beforeCompletion() {
                     if (writerManager != null) {
                         writerManager.put(element);
@@ -312,6 +330,8 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
                         cache.getWriterManager().put(element);
                     }
                 }
+
+                @Override
                 public void afterCompletion(int status) {
                     //
                 }
@@ -330,6 +350,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element get(Object key) {
         registerInJtaContext();
         try {
@@ -343,6 +364,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element getQuiet(Object key) {
         registerInJtaContext();
         try {
@@ -356,6 +378,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public List getKeys() {
         registerInJtaContext();
         try {
@@ -369,6 +392,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element remove(Object key) {
         registerInJtaContext();
         try {
@@ -378,7 +402,6 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
             throw e;
         }
     }
-
 
     /**
      * {@inheritDoc}
@@ -397,12 +420,14 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element removeWithWriter(final Object key, final CacheWriterManager writerManager) throws CacheException {
         registerInJtaContext();
         try {
             Element removed = underlyingStore.remove(key);
             final CacheEntry cacheEntry = new CacheEntry(key, getQuiet(key));
             transactionManager.getTransaction().registerSynchronization(new Synchronization() {
+                @Override
                 public void beforeCompletion() {
                     if (writerManager != null) {
                         writerManager.remove(cacheEntry);
@@ -410,6 +435,8 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
                         cache.getWriterManager().remove(cacheEntry);
                     }
                 }
+
+                @Override
                 public void afterCompletion(int status) {
                     //
                 }
@@ -428,6 +455,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void removeAll() throws CacheException {
         registerInJtaContext();
         try {
@@ -441,6 +469,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element putIfAbsent(Element element) throws NullPointerException {
         registerInJtaContext();
         try {
@@ -454,6 +483,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element removeElement(Element element, ElementValueComparator comparator) throws NullPointerException {
         registerInJtaContext();
         try {
@@ -467,6 +497,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean replace(Element old, Element element, ElementValueComparator comparator)
             throws NullPointerException, IllegalArgumentException {
         registerInJtaContext();
@@ -481,6 +512,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element replace(Element element) throws NullPointerException {
         registerInJtaContext();
         try {
@@ -494,6 +526,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getSize() {
         registerInJtaContext();
         try {
@@ -507,6 +540,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getTerracottaClusteredSize() {
         if (transactionController.getCurrentTransactionContext() == null) {
             return underlyingStore.getTerracottaClusteredSize();
@@ -524,6 +558,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsKey(Object key) {
         registerInJtaContext();
         try {
@@ -533,8 +568,6 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
             throw e;
         }
     }
-
-
 
 }
 
