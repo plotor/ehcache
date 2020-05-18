@@ -1,18 +1,19 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache;
 
 import net.sf.ehcache.cluster.CacheCluster;
@@ -35,9 +36,9 @@ import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.event.CacheEventListener;
 import net.sf.ehcache.event.CacheManagerEventListener;
 import net.sf.ehcache.event.CacheManagerEventListenerRegistry;
+import net.sf.ehcache.management.ManagementServerLoader;
 import net.sf.ehcache.management.event.DelegatingManagementEventSink;
 import net.sf.ehcache.management.event.ManagementEventSink;
-import net.sf.ehcache.management.ManagementServerLoader;
 import net.sf.ehcache.management.provider.MBeanRegistrationProvider;
 import net.sf.ehcache.management.provider.MBeanRegistrationProviderException;
 import net.sf.ehcache.management.provider.MBeanRegistrationProviderFactory;
@@ -63,7 +64,6 @@ import net.sf.ehcache.util.FailSafeTimer;
 import net.sf.ehcache.util.PropertyUtil;
 import net.sf.ehcache.util.UpdateChecker;
 import net.sf.ehcache.writer.writebehind.WriteBehind;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.statistics.StatisticsManager;
@@ -122,11 +122,10 @@ public class CacheManager {
      * System property to enable creation of a shutdown hook for CacheManager.
      */
     public static final String ENABLE_SHUTDOWN_HOOK_PROPERTY = "net.sf.ehcache.enableShutdownHook";
-    
 
     private static final Logger LOG = LoggerFactory.getLogger(CacheManager.class);
 
-   /**
+    /**
      * Update check interval - one week in milliseconds
      */
     private static final long EVERY_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -141,7 +140,7 @@ public class CacheManager {
      */
     private static final int POOL_SHUTDOWN_TIMEOUT_SECS = 60;
 
-   /**
+    /**
      * The Singleton Instance.
      */
     private static volatile CacheManager singleton;
@@ -161,7 +160,7 @@ public class CacheManager {
     private static final Map<String, CacheManager> INITIALIZING_CACHE_MANAGERS_MAP = new ConcurrentHashMap<String, CacheManager>();
 
     private static final long LOCAL_TX_RECOVERY_THREAD_JOIN_TIMEOUT = 1000L;
-    
+
     static final String LOCAL_CACHE_NAME_PREFIX = "local_shadow_cache_for_";
 
     /**
@@ -200,7 +199,6 @@ public class CacheManager {
     private final ConcurrentMap<String, Ehcache> ehcaches = new ConcurrentHashMap<String, Ehcache>();
 
     private final Map<String, Ehcache> initializingCaches = new ConcurrentHashMap<String, Ehcache>();
-
 
     /**
      * Default cache cache.
@@ -245,7 +243,7 @@ public class CacheManager {
      */
     private ScheduledExecutorService statisticsExecutor;
 
-   /**
+    /**
      * An constructor for CacheManager, which takes a configuration object, rather than one created by parsing
      * an ehcache.xml file. This constructor gives complete control over the creation of the CacheManager.
      * <p/>
@@ -284,9 +282,8 @@ public class CacheManager {
      * instance
      * of CacheManager for same names (or unnamed). Shutting down the CacheManager will deregister it and new ones can be created again.
      *
-     * @param configurationFileName
-     *            an xml configuration file available through a file name. The configuration {@link File} is created
-     *            using new <code>File(configurationFileName)</code>
+     * @param configurationFileName an xml configuration file available through a file name. The configuration {@link File} is created
+     * using new <code>File(configurationFileName)</code>
      * @throws CacheException
      * @see #newInstance(String)
      */
@@ -321,8 +318,7 @@ public class CacheManager {
      * <p/>
      * You can also load a resource using other class loaders. e.g. {@link Thread#getContextClassLoader()}
      *
-     * @param configurationURL
-     *            an xml configuration available through a URL.
+     * @param configurationURL an xml configuration available through a URL.
      * @throws CacheException
      * @see #newInstance(URL)
      * @since 1.2
@@ -346,8 +342,7 @@ public class CacheManager {
      * instance
      * of CacheManager for same names (or unnamed). Shutting down the CacheManager will deregister it and new ones can be created again.
      *
-     * @param configurationInputStream
-     *            an xml configuration file available through an inputstream
+     * @param configurationInputStream an xml configuration file available through an inputstream
      * @throws CacheException
      * @see #newInstance(InputStream)
      */
@@ -378,8 +373,10 @@ public class CacheManager {
     /**
      * initialises the CacheManager
      */
-    protected synchronized void init(Configuration initialConfiguration, String configurationFileName, URL configurationURL,
-            InputStream configurationInputStream) {
+    protected synchronized void init(Configuration initialConfiguration,
+                                     String configurationFileName,
+                                     URL configurationURL,
+                                     InputStream configurationInputStream) {
         Configuration configuration;
 
         if (initialConfiguration == null) {
@@ -436,19 +433,20 @@ public class CacheManager {
         runtimeCfg = configuration.setupFor(this, DEFAULT_NAME);
 
         statisticsExecutor = Executors.newScheduledThreadPool(
-          Integer.getInteger("net.sf.ehcache.CacheManager.statisticsExecutor.poolSize", 1) ,
+                Integer.getInteger("net.sf.ehcache.CacheManager.statisticsExecutor.poolSize", 1),
 
-          new ThreadFactory() {
-             private AtomicInteger cnt = new AtomicInteger(0);
-             @Override
-             public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "Statistics Thread-" + getName() + "-" + cnt.incrementAndGet());
-                t.setDaemon(true);
-                return t;
-             }
-          });
+                new ThreadFactory() {
+                    private AtomicInteger cnt = new AtomicInteger(0);
 
-       if (configuration.isMaxBytesLocalHeapSet()) {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread t = new Thread(r, "Statistics Thread-" + getName() + "-" + cnt.incrementAndGet());
+                        t.setDaemon(true);
+                        return t;
+                    }
+                });
+
+        if (configuration.isMaxBytesLocalHeapSet()) {
             PoolEvictor evictor = new BalancedAccessEvictor();
             SizeOfEngine sizeOfEngine = createSizeOfEngine(null);
             this.onHeapPool = new BoundedPool(configuration.getMaxBytesLocalHeap(), evictor, sizeOfEngine);
@@ -470,8 +468,8 @@ public class CacheManager {
         ConfigurationHelper configurationHelper = new ConfigurationHelper(this, configuration);
         configure(configurationHelper);
 
-        this.transactionController = new TransactionController(getOrCreateTransactionIDFactory(),
-                configuration.getDefaultTransactionTimeoutInSeconds());
+        this.transactionController = new TransactionController(
+                getOrCreateTransactionIDFactory(), configuration.getDefaultTransactionTimeoutInSeconds());
 
         status = Status.STATUS_ALIVE;
 
@@ -486,7 +484,7 @@ public class CacheManager {
         checkForUpdateIfNeeded(configuration.getUpdateCheck());
 
         mbeanRegistrationProvider = MBEAN_REGISTRATION_PROVIDER_FACTORY.createMBeanRegistrationProvider(configuration);
-        
+
         //Wait for the Orchestrator if required. This should be done before creating the caches
         if (configuration.getTerracottaConfiguration() != null) {
             if (configuration.getTerracottaConfiguration().isWanEnabledTSA()) {
@@ -581,22 +579,22 @@ public class CacheManager {
 
         if (connectingToSecureCluster && !managementRESTService.isSslEnabled()) {
             throw new InvalidConfigurationException("The REST agent cannot be bound to a port when SSL is disabled and" +
-                                                    " connecting to a secure cluster. Change your configuration to" +
-                                                    " <ManagementRESTServiceConfiguration sslEnabled=\"true\" .../>" +
-                                                    " or remove the ManagementRESTServiceConfiguration element.");
+                    " connecting to a secure cluster. Change your configuration to" +
+                    " <ManagementRESTServiceConfiguration sslEnabled=\"true\" .../>" +
+                    " or remove the ManagementRESTServiceConfiguration element.");
         }
 
         if (connectingToSecureCluster && managementRESTService.getSecurityServiceLocation() == null) {
             managementRESTService.setSecurityServiceLocation(ManagementRESTServiceConfiguration.AUTO_LOCATION);
             LOG.warn("The REST agent must have a non-null Security Service Location when SSL is enabled." +
-                     " Using ManagementRESTServiceConfiguration.AUTO_LOCATION as a connection to a secure cluster" +
-                     " is configured.");
+                    " Using ManagementRESTServiceConfiguration.AUTO_LOCATION as a connection to a secure cluster" +
+                    " is configured.");
         }
 
         if (managementRESTService.isSslEnabled() && managementRESTService.getSecurityServiceLocation() == null) {
             throw new InvalidConfigurationException("The REST agent must have a non-null Security Service Location when" +
-                                                    " SSL is enabled. Change your configuration to" +
-                                                    " <ManagementRESTServiceConfiguration securityServiceLocation=\"...\" .../>.");
+                    " SSL is enabled. Change your configuration to" +
+                    " <ManagementRESTServiceConfiguration securityServiceLocation=\"...\" .../>.");
         }
     }
 
@@ -662,7 +660,7 @@ public class CacheManager {
      * contains caches clustered with Terracotta. Otherwise returns blank string.
      *
      * @return Returns unique cluster-wide id for this cache-manager when it contains clustered caches (e.g. Terracotta clustered caches).
-     *         Otherwise returns blank string.
+     * Otherwise returns blank string.
      */
     public String getClusterUUID() {
         if (terracottaClient.getClusteredInstanceFactory() != null) {
@@ -703,7 +701,7 @@ public class CacheManager {
      * @return a new cache event replicator
      */
     public CacheEventListener createTerracottaEventReplicator(Ehcache cache) {
-      return getClusteredInstanceFactory().createEventReplicator(cache);
+        return getClusteredInstanceFactory().createEventReplicator(cache);
     }
 
     /**
@@ -732,18 +730,14 @@ public class CacheManager {
      * <p/>
      * Should only be called once.
      *
-     * @param configurationFileName
-     *            the file name to parse, or null
-     * @param configurationURL
-     *            the URL to pass, or null
-     * @param configurationInputStream
-     *            , the InputStream to parse, or null
+     * @param configurationFileName the file name to parse, or null
+     * @param configurationURL the URL to pass, or null
+     * @param configurationInputStream , the InputStream to parse, or null
      * @return the loaded configuration
-     * @throws CacheException
-     *             if the configuration cannot be parsed
+     * @throws CacheException if the configuration cannot be parsed
      */
     private synchronized Configuration parseConfiguration(String configurationFileName, URL configurationURL,
-            InputStream configurationInputStream) throws CacheException {
+                                                          InputStream configurationInputStream) throws CacheException {
         reinitialisationCheck();
         Configuration parsedConfig;
         if (configurationFileName != null) {
@@ -827,7 +821,7 @@ public class CacheManager {
 
     private void addConfiguredCaches(ConfigurationHelper configurationHelper) {
         Set unitialisedCaches = configurationHelper.createCaches();
-        for (Iterator iterator = unitialisedCaches.iterator(); iterator.hasNext();) {
+        for (Iterator iterator = unitialisedCaches.iterator(); iterator.hasNext(); ) {
             Ehcache unitialisedCache = (Ehcache) iterator.next();
             addCacheNoCheck(unitialisedCache, true);
 
@@ -860,8 +854,7 @@ public class CacheManager {
      * required, call shutdown to free resources.
      *
      * @return the singleton CacheManager
-     * @throws CacheException
-     *             if the CacheManager cannot be created
+     * @throws CacheException if the CacheManager cannot be created
      */
     public static CacheManager create() throws CacheException {
         if (singleton != null) {
@@ -885,8 +878,7 @@ public class CacheManager {
      * required, call shutdown to free resources.
      *
      * @return the singleton CacheManager
-     * @throws CacheException
-     *             if the CacheManager cannot be created
+     * @throws CacheException if the CacheManager cannot be created
      */
     public static CacheManager newInstance() throws CacheException {
         return newInstance(ConfigurationFactory.parseConfiguration(), "Creating new CacheManager with default config");
@@ -900,8 +892,7 @@ public class CacheManager {
      * Same as {@link #create()}
      *
      * @return the singleton CacheManager
-     * @throws CacheException
-     *             if the CacheManager cannot be created
+     * @throws CacheException if the CacheManager cannot be created
      */
     public static CacheManager getInstance() throws CacheException {
         return CacheManager.create();
@@ -910,11 +901,10 @@ public class CacheManager {
     /**
      * A factory method to create a singleton CacheManager with a specified configuration.
      *
-     * @param configurationFileName
-     *            an xml file compliant with the ehcache.xsd schema
-     *            <p/>
-     *            The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
-     *            no longer required, call shutdown to free resources.
+     * @param configurationFileName an xml file compliant with the ehcache.xsd schema
+     * <p/>
+     * The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
+     * no longer required, call shutdown to free resources.
      */
     public static CacheManager create(String configurationFileName) throws CacheException {
         if (singleton != null) {
@@ -937,11 +927,10 @@ public class CacheManager {
      * If the specified configuration has different names for the CacheManager, it will return a new one for each unique name or return
      * already created one.
      *
-     * @param configurationFileName
-     *            an xml file compliant with the ehcache.xsd schema
-     *            <p/>
-     *            The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
-     *            no longer required, call shutdown to free resources.
+     * @param configurationFileName an xml file compliant with the ehcache.xsd schema
+     * <p/>
+     * The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
+     * no longer required, call shutdown to free resources.
      */
     public static CacheManager newInstance(String configurationFileName) throws CacheException {
         return newInstance(ConfigurationFactory.parseConfiguration(new File(configurationFileName)),
@@ -963,11 +952,10 @@ public class CacheManager {
      * <p/>
      * You can also load a resource using other class loaders. e.g. {@link Thread#getContextClassLoader()}
      *
-     * @param configurationFileURL
-     *            an URL to an xml file compliant with the ehcache.xsd schema
-     *            <p/>
-     *            The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
-     *            no longer required, call shutdown to free resources.
+     * @param configurationFileURL an URL to an xml file compliant with the ehcache.xsd schema
+     * <p/>
+     * The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
+     * no longer required, call shutdown to free resources.
      */
     public static CacheManager create(URL configurationFileURL) throws CacheException {
         if (singleton != null) {
@@ -1002,11 +990,10 @@ public class CacheManager {
      * If the specified configuration has different names for the CacheManager, it will return a new one for each unique name or return
      * already created one.
      *
-     * @param configurationFileURL
-     *            an URL to an xml file compliant with the ehcache.xsd schema
-     *            <p/>
-     *            The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
-     *            no longer required, call shutdown to free resources.
+     * @param configurationFileURL an URL to an xml file compliant with the ehcache.xsd schema
+     * <p/>
+     * The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
+     * no longer required, call shutdown to free resources.
      */
     public static CacheManager newInstance(URL configurationFileURL) throws CacheException {
         return newInstance(ConfigurationFactory.parseConfiguration(configurationFileURL), "Creating new CacheManager with config URL: "
@@ -1019,11 +1006,10 @@ public class CacheManager {
      * This method makes it possible to use an inputstream for configuration. Note: it is the clients responsibility to close the
      * inputstream.
      *
-     * @param inputStream
-     *            InputStream of xml compliant with the ehcache.xsd schema
-     *            <p/>
-     *            The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
-     *            no longer required, call shutdown to free resources.
+     * @param inputStream InputStream of xml compliant with the ehcache.xsd schema
+     * <p/>
+     * The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
+     * no longer required, call shutdown to free resources.
      */
     public static CacheManager create(InputStream inputStream) throws CacheException {
         if (singleton != null) {
@@ -1050,11 +1036,10 @@ public class CacheManager {
      * If the specified configuration has different names for the CacheManager, it will return a new one for each unique name or return
      * already created one.
      *
-     * @param inputStream
-     *            InputStream of xml compliant with the ehcache.xsd schema
-     *            <p/>
-     *            The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
-     *            no longer required, call shutdown to free resources.
+     * @param inputStream InputStream of xml compliant with the ehcache.xsd schema
+     * <p/>
+     * The configuration will be read, {@link Ehcache}s created and required stores initialized. When the {@link CacheManager} is
+     * no longer required, call shutdown to free resources.
      */
     public static CacheManager newInstance(InputStream inputStream) throws CacheException {
         return newInstance(ConfigurationFactory.parseConfiguration(inputStream), "Creating new CacheManager with InputStream");
@@ -1124,8 +1109,8 @@ public class CacheManager {
      *
      * @param name the cacheManager name.
      * @return if a cacheManager exists with given name returns the CacheManager, otherwise returns null. If <code>name</code> is null,
-     *         returns the default unnamed cacheManager if it has been created
-     *         already otherwise returns null
+     * returns the default unnamed cacheManager if it has been created
+     * already otherwise returns null
      */
     public static CacheManager getCacheManager(String name) {
         synchronized (CacheManager.class) {
@@ -1147,8 +1132,7 @@ public class CacheManager {
      * decorating.
      *
      * @return a Cache, if an object of that type exists by that name, else null
-     * @throws IllegalStateException
-     *             if the cache is not {@link Status#STATUS_ALIVE}
+     * @throws IllegalStateException if the cache is not {@link Status#STATUS_ALIVE}
      * @see #getEhcache(String)
      */
     public Cache getCache(String name) throws IllegalStateException, ClassCastException {
@@ -1162,8 +1146,7 @@ public class CacheManager {
      * <p/>
      *
      * @return a Cache, if an object of type Cache exists by that name, else null
-     * @throws IllegalStateException
-     *             if the cache is not {@link Status#STATUS_ALIVE}
+     * @throws IllegalStateException if the cache is not {@link Status#STATUS_ALIVE}
      */
     public Ehcache getEhcache(String name) throws IllegalStateException {
         checkStatus();
@@ -1231,12 +1214,9 @@ public class CacheManager {
      * <p/>
      * It will be created with the defaultCache attributes specified in ehcache.xml
      *
-     * @param cacheName
-     *            the name for the cache
-     * @throws ObjectExistsException
-     *             if the cache already exists
-     * @throws CacheException
-     *             if there was an error creating the cache.
+     * @param cacheName the name for the cache
+     * @throws ObjectExistsException if the cache already exists
+     * @throws CacheException        if there was an error creating the cache.
      */
     public synchronized void addCache(String cacheName) throws IllegalStateException, ObjectExistsException, CacheException {
         checkStatus();
@@ -1266,12 +1246,9 @@ public class CacheManager {
      * CacheManagerEventListener after the cache was initialised and added.
      *
      * @param cache
-     * @throws IllegalStateException
-     *             if the cache is not {@link Status#STATUS_UNINITIALISED} before this method is called.
-     * @throws ObjectExistsException
-     *             if the cache already exists in the CacheManager
-     * @throws CacheException
-     *             if there was an error adding the cache to the CacheManager
+     * @throws IllegalStateException if the cache is not {@link Status#STATUS_UNINITIALISED} before this method is called.
+     * @throws ObjectExistsException if the cache already exists in the CacheManager
+     * @throws CacheException        if there was an error adding the cache to the CacheManager
      */
     public void addCache(Cache cache) throws IllegalStateException, ObjectExistsException, CacheException {
         checkStatus();
@@ -1288,12 +1265,9 @@ public class CacheManager {
      * CacheManagerEventListener after the cache was initialised and added.
      *
      * @param cache
-     * @throws IllegalStateException
-     *             if the cache is not {@link Status#STATUS_UNINITIALISED} before this method is called.
-     * @throws ObjectExistsException
-     *             if the cache already exists in the CacheManager
-     * @throws CacheException
-     *             if there was an error adding the cache to the CacheManager
+     * @throws IllegalStateException if the cache is not {@link Status#STATUS_UNINITIALISED} before this method is called.
+     * @throws ObjectExistsException if the cache already exists in the CacheManager
+     * @throws CacheException        if there was an error adding the cache to the CacheManager
      */
     public synchronized void addCache(Ehcache cache) throws IllegalStateException, ObjectExistsException, CacheException {
         checkStatus();
@@ -1303,7 +1277,7 @@ public class CacheManager {
         final CacheConfiguration cacheConfiguration = cache.getCacheConfiguration();
         final boolean verifyOffHeapUsage = runtimeCfg.hasOffHeapPool()
                 && ((!cacheConfiguration.isOverflowToDisk() && !cacheConfiguration.isOverflowToOffHeapSet()) || cacheConfiguration
-                        .isOverflowToOffHeap());
+                .isOverflowToOffHeap());
 
         if (verifyOffHeapUsage
                 && (cacheConfiguration.isMaxBytesLocalOffHeapPercentageSet() || cacheConfiguration.getMaxBytesLocalOffHeap() > 0)) {
@@ -1328,8 +1302,7 @@ public class CacheManager {
      * new methods that the decorator introduces. For more information see the well known Gang of Four Decorator pattern.
      *
      * @param decoratedCache
-     * @throws ObjectExistsException
-     *             if another cache with the same name already exists.
+     * @throws ObjectExistsException if another cache with the same name already exists.
      */
     public synchronized void addDecoratedCache(Ehcache decoratedCache) throws ObjectExistsException {
         internalAddDecoratedCache(decoratedCache, true);
@@ -1398,7 +1371,6 @@ public class CacheManager {
         }
     }
 
-
     private String getParentCacheName(Ehcache shadow) {
         String shadowPrefix = LOCAL_CACHE_NAME_PREFIX + getName() + "___tc_clustered-ehcache|" + getName() + "|";
         if (shadow.getName().startsWith(shadowPrefix)) {
@@ -1409,7 +1381,7 @@ public class CacheManager {
     }
 
     private Ehcache addCacheNoCheck(final Ehcache cache, final boolean strict) throws IllegalStateException, ObjectExistsException,
-            CacheException {
+                                                                                      CacheException {
 
         if (cache.getStatus() != Status.STATUS_UNINITIALISED) {
             throw new CacheException("Trying to add an already initialized cache." + " If you are adding a decorated cache, "
@@ -1418,8 +1390,8 @@ public class CacheManager {
 
         if (cache.getCacheConfiguration().isTerracottaClustered() && terracottaClient.getClusteredInstanceFactory() == null) {
             throw new CacheException(String.format("Trying to add terracotta cache %s but no <terracottaConfig> element was " +
-                                                   "used to specify the Terracotta configuration on the CacheManager %s.",
-                                                    cache.getName(), getName()));
+                            "used to specify the Terracotta configuration on the CacheManager %s.",
+                    cache.getName(), getName()));
         }
 
         Ehcache ehcache = ehcaches.get(cache.getName());
@@ -1455,11 +1427,9 @@ public class CacheManager {
      * Checks whether a cache of type ehcache exists.
      * <p/>
      *
-     * @param cacheName
-     *            the cache name to check for
+     * @param cacheName the cache name to check for
      * @return true if it exists
-     * @throws IllegalStateException
-     *             if the cache is not {@link Status#STATUS_ALIVE}
+     * @throws IllegalStateException if the cache is not {@link Status#STATUS_ALIVE}
      */
     public boolean cacheExists(String cacheName) throws IllegalStateException {
         checkStatus();
@@ -1478,6 +1448,7 @@ public class CacheManager {
 
     /**
      * Removes all caches using {@link #removeCache(String)} for each cache.
+     *
      * @deprecated use {@link #removeAllCaches} instead
      */
     @Deprecated
@@ -1488,10 +1459,8 @@ public class CacheManager {
     /**
      * Remove a cache from the CacheManager. The cache is disposed of.
      *
-     * @param cacheName
-     *            the cache name
-     * @throws IllegalStateException
-     *             if the cache is not {@link Status#STATUS_ALIVE}
+     * @param cacheName the cache name
+     * @throws IllegalStateException if the cache is not {@link Status#STATUS_ALIVE}
      */
     public synchronized void removeCache(String cacheName) throws IllegalStateException {
         checkStatus();
@@ -1597,13 +1566,11 @@ public class CacheManager {
         }
     }
 
-
     /**
      * Returns a list of the current cache names.
      *
      * @return an array of {@link String}s
-     * @throws IllegalStateException
-     *             if the cache is not {@link Status#STATUS_ALIVE}
+     * @throws IllegalStateException if the cache is not {@link Status#STATUS_ALIVE}
      */
     public String[] getCacheNames() throws IllegalStateException {
         checkStatus();
@@ -1656,8 +1623,7 @@ public class CacheManager {
      * This method is not synchronized. It only guarantees to clear those elements in a cache at the time that the
      * {@link Ehcache#removeAll()} method on each cache is called.
      *
-     * @param prefix
-     *            The prefix the cache name should start with
+     * @param prefix The prefix the cache name should start with
      * @throws CacheException
      * @since 1.7.2
      */
@@ -1683,8 +1649,7 @@ public class CacheManager {
      * Gets the <code>CacheManagerPeerProvider</code>, matching the given scheme
      * For distributed caches, the peer provider finds other cache managers and their caches in the same cluster
      *
-     * @param scheme
-     *            the replication scheme to use. Schemes shipped with ehcache are RMI, JGROUPS, JMS
+     * @param scheme the replication scheme to use. Schemes shipped with ehcache are RMI, JGROUPS, JMS
      * @return the provider, or null if one does not exist
      */
     public CacheManagerPeerProvider getCacheManagerPeerProvider(String scheme) {
@@ -1702,8 +1667,7 @@ public class CacheManager {
      * When CacheManage is configured as part of a cluster, a CacheManagerPeerListener will
      * be registered in it. Use this to access the individual cache listeners
      *
-     * @param scheme
-     *            the replication scheme to use. Schemes shipped with ehcache are RMI, JGROUPS, JMS
+     * @param scheme the replication scheme to use. Schemes shipped with ehcache are RMI, JGROUPS, JMS
      * @return the listener, or null if one does not exist
      */
     public CacheManagerPeerListener getCachePeerListener(String scheme) {
@@ -1725,8 +1689,7 @@ public class CacheManager {
      * Same as getCacheManagerEventListenerRegistry().registerListener(cacheManagerEventListener);
      * Left for backward compatiblity
      *
-     * @param cacheManagerEventListener
-     *            the listener to set.
+     * @param cacheManagerEventListener the listener to set.
      * @see "getCacheManagerEventListenerRegistry"
      */
     public void setCacheManagerEventListener(CacheManagerEventListener cacheManagerEventListener) {
@@ -1760,10 +1723,8 @@ public class CacheManager {
      * the decorator introduces. For more information see the well known Gang of Four Decorator pattern.
      *
      * @param ehcache
-     * @param decoratedCache
-     *            An implementation of Ehcache that wraps the original cache.
-     * @throws CacheException
-     *             if the two caches do not equal each other.
+     * @param decoratedCache An implementation of Ehcache that wraps the original cache.
+     * @throws CacheException if the two caches do not equal each other.
      */
     public synchronized void replaceCacheWithDecoratedCache(Ehcache ehcache, Ehcache decoratedCache) throws CacheException {
         if (!ehcache.equals(decoratedCache)) {
@@ -2079,7 +2040,7 @@ public class CacheManager {
                 sizeOfPolicyConfiguration = getConfiguration().getSizeOfPolicyConfiguration();
             }
             return SizeOfEngineLoader.newSizeOfEngine(sizeOfPolicyConfiguration.getMaxDepth(),
-                sizeOfPolicyConfiguration.getMaxDepthExceededBehavior().isAbort(), false);
+                    sizeOfPolicyConfiguration.getMaxDepthExceededBehavior().isAbort(), false);
         }
     }
 
@@ -2125,15 +2086,16 @@ public class CacheManager {
      */
     static CacheManager getInitializingCacheManager(String name) {
         return INITIALIZING_CACHE_MANAGERS_MAP.get(name);
-    }    
+    }
 
     /**
      * Send a management event to the cluster
+     *
      * @param event, the event (most probably an EventEntity)
      * @param type, the type of the event
      */
     public void sendManagementEvent(Serializable event, String type) {
-      getOrCreateEventSink().sendManagementEvent(event, type);
+        getOrCreateEventSink().sendManagementEvent(event, type);
     }
 
     private ManagementEventSink getOrCreateEventSink() {

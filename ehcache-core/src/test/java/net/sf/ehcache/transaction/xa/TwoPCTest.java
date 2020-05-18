@@ -12,19 +12,16 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.store.TxCopyingCacheStore;
 import net.sf.ehcache.transaction.TransactionTimeoutException;
-
 import org.junit.After;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.Map;
-
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * @author lorban
@@ -90,6 +87,7 @@ public class TwoPCTest {
         // Remove the caches between the 1st and 2nd phase of 2PC to make sure the soft locks are in the cache but won't be deserializable.
         // We must also make sure to use at least 2 XA resources to prevent the 1PC optimization to kick in.
         transactionManager.getCurrentTransaction().addTransactionStatusChangeListener(new TransactionStatusChangeListener() {
+            @Override
             public void statusChanged(final int oldStatus, final int newStatus) {
                 if (oldStatus == Status.STATUS_PREPARED) {
                     cacheManager.removeCache("xaCache1");
@@ -134,14 +132,14 @@ public class TwoPCTest {
         }
 
         // check that there is no internal leak (EHC-937)
-        assertEquals(0, ((Map)getStoreField(xaCache1, "transactionToTimeoutMap")).size());
+        assertEquals(0, ((Map) getStoreField(xaCache1, "transactionToTimeoutMap")).size());
     }
 
     private static Object getStoreField(Ehcache cache, String storeFieldName) throws IllegalAccessException, NoSuchFieldException {
-        CacheStoreHelper cacheStoreHelper = new CacheStoreHelper((Cache)cache);
+        CacheStoreHelper cacheStoreHelper = new CacheStoreHelper((Cache) cache);
 
-        TxCopyingCacheStore copyingCacheStore = (TxCopyingCacheStore)cacheStoreHelper.getStore();
-        XATransactionStore store = (XATransactionStore)copyingCacheStore.getUnderlyingStore();
+        TxCopyingCacheStore copyingCacheStore = (TxCopyingCacheStore) cacheStoreHelper.getStore();
+        XATransactionStore store = (XATransactionStore) copyingCacheStore.getUnderlyingStore();
 
         Field field = store.getClass().getDeclaredField(storeFieldName);
         field.setAccessible(true);

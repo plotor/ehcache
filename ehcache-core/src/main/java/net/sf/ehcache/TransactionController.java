@@ -1,18 +1,19 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache;
 
 import net.sf.ehcache.transaction.TransactionException;
@@ -52,6 +53,7 @@ public final class TransactionController {
 
     /**
      * Create a TransactionController instance
+     *
      * @param transactionIDFactory the TransactionIDFactory
      * @param defaultTransactionTimeoutInSeconds the default transaction timeout in seconds
      */
@@ -63,6 +65,7 @@ public final class TransactionController {
 
     /**
      * Get the default transaction timeout in seconds
+     *
      * @return the default transaction timeout
      */
     public int getDefaultTransactionTimeout() {
@@ -71,6 +74,7 @@ public final class TransactionController {
 
     /**
      * Set the default transaction timeout in seconds, it must be > 0
+     *
      * @param defaultTransactionTimeoutSeconds the default transaction timeout
      */
     public void setDefaultTransactionTimeout(int defaultTransactionTimeoutSeconds) {
@@ -89,6 +93,7 @@ public final class TransactionController {
 
     /**
      * Begin a new transaction with the specified timeout and bind its context to the current thread
+     *
      * @param transactionTimeoutSeconds the timeout foe this transaction in seconds
      */
     public void begin(int transactionTimeoutSeconds) {
@@ -115,6 +120,7 @@ public final class TransactionController {
     /**
      * Commit the transaction bound to the current thread, ignoring if the transaction
      * timed out
+     *
      * @param ignoreTimeout true if the transaction should be committed no matter if it timed out or not
      */
     public void commit(boolean ignoreTimeout) {
@@ -181,8 +187,9 @@ public final class TransactionController {
 
     /**
      * Get the transaction context bond to the current thread
+     *
      * @return the transaction context bond to the current thread or null if no transaction
-     *      started on the current thread
+     * started on the current thread
      */
     public LocalTransactionContext getCurrentTransactionContext() {
         TransactionID txId = currentTransactionIdThreadLocal.get();
@@ -194,6 +201,7 @@ public final class TransactionController {
 
     /**
      * Get the committed transactions count
+     *
      * @return the committed transactions count
      */
     public long getTransactionCommittedCount() {
@@ -202,6 +210,7 @@ public final class TransactionController {
 
     /**
      * Get the rolled back transactions count
+     *
      * @return the rolled back transactions count
      */
     public long getTransactionRolledBackCount() {
@@ -211,15 +220,16 @@ public final class TransactionController {
     /**
      * Get the timed out transactions count. Note that only transactions which failed to
      * commit due to a timeout are taken into account
+     *
      * @return the timed out transactions count
      */
     public long getTransactionTimedOutCount() {
         return statistics.getTransactionTimedOutCount();
     }
 
-
     /**
      * Get the local transactions recovery manager of this cache manager
+     *
      * @return the local transactions recovery manager
      */
     public LocalRecoveryManager getRecoveryManager() {
