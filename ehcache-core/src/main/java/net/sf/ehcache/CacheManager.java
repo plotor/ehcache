@@ -380,6 +380,7 @@ public class CacheManager {
         Configuration configuration;
 
         if (initialConfiguration == null) {
+            // 解析配置
             configuration = parseConfiguration(configurationFileName, configurationURL, configurationInputStream);
         } else {
             configuration = initialConfiguration;
@@ -468,6 +469,7 @@ public class CacheManager {
         ConfigurationHelper configurationHelper = new ConfigurationHelper(this, configuration);
         configure(configurationHelper);
 
+        // 创建事务控制器
         this.transactionController = new TransactionController(
                 getOrCreateTransactionIDFactory(), configuration.getDefaultTransactionTimeoutInSeconds());
 
@@ -736,12 +738,12 @@ public class CacheManager {
      * @return the loaded configuration
      * @throws CacheException if the configuration cannot be parsed
      */
-    private synchronized Configuration parseConfiguration(String configurationFileName, URL configurationURL,
+    private synchronized Configuration parseConfiguration(String configurationFileName,
+                                                          URL configurationURL,
                                                           InputStream configurationInputStream) throws CacheException {
         reinitialisationCheck();
         Configuration parsedConfig;
         if (configurationFileName != null) {
-
             LOG.debug("Configuring CacheManager from {}", configurationFileName);
             parsedConfig = ConfigurationFactory.parseConfiguration(new File(configurationFileName));
         } else if (configurationURL != null) {

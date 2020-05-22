@@ -67,8 +67,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     private final Ehcache cache;
     private final EhcacheXAResourceImpl recoveryResource;
 
-    private final ConcurrentHashMap<Transaction, EhcacheXAResource> transactionToXAResourceMap =
-            new ConcurrentHashMap<Transaction, EhcacheXAResource>();
+    private final ConcurrentHashMap<Transaction, EhcacheXAResource> transactionToXAResourceMap = new ConcurrentHashMap<Transaction, EhcacheXAResource>();
     private final ConcurrentHashMap<Transaction, Long> transactionToTimeoutMap = new ConcurrentHashMap<Transaction, Long>();
 
     private final OperationObserver<XaCommitOutcome> commitObserver = StatisticBuilder.operation(XaCommitOutcome.class)

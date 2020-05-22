@@ -1,18 +1,19 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.store;
 
 import net.sf.ehcache.Element;
@@ -27,7 +28,6 @@ import net.sf.ehcache.transaction.SoftLockID;
  * Also exposes a method to get the old value from an entry currently mutated in a transaction.
  *
  * @param <T> the store type it wraps
- *
  * @author ljacomet
  */
 public final class TxCopyingCacheStore<T extends Store> extends AbstractCopyingCacheStore<T> {
@@ -35,11 +35,11 @@ public final class TxCopyingCacheStore<T extends Store> extends AbstractCopyingC
     /**
      * Creates a copying instance of store, that wraps the actual storage
      *
-     * @param store                the real store
-     * @param copyOnRead           whether to copy on reads
-     * @param copyOnWrite          whether to copy on writes
+     * @param store the real store
+     * @param copyOnRead whether to copy on reads
+     * @param copyOnWrite whether to copy on writes
      * @param copyStrategyInstance the copy strategy to use on every copy operation
-     * @param loader               classloadaer of the containing cache
+     * @param loader classloadaer of the containing cache
      */
     public TxCopyingCacheStore(T store, boolean copyOnRead, boolean copyOnWrite, ReadWriteCopyStrategy<Element> copyStrategyInstance, ClassLoader loader) {
         super(store, copyOnRead, copyOnWrite, copyStrategyInstance, loader);
@@ -55,12 +55,12 @@ public final class TxCopyingCacheStore<T extends Store> extends AbstractCopyingC
      * @return the matching element, null if not found
      */
     public Element getOldElement(Object key) {
-        return getCopyStrategyHandler().copyElementForReadIfNeeded(((AbstractTransactionStore)getUnderlyingStore()).getOldElement(key));
+        return getCopyStrategyHandler().copyElementForReadIfNeeded(((AbstractTransactionStore) getUnderlyingStore()).getOldElement(key));
     }
-
 
     /**
      * Wraps the Store instance passed in, should any copy occur
+     *
      * @param cacheStore the store
      * @param cacheConfiguration the cache config for that store
      * @return the wrapped Store if copying is required, or the Store instance passed in
@@ -74,6 +74,7 @@ public final class TxCopyingCacheStore<T extends Store> extends AbstractCopyingC
 
     /**
      * Wraps (always) with the proper configured CopyingCacheStore
+     *
      * @param cacheStore the store to wrap
      * @param cacheConfiguration the cache config backed by this store
      * @param <T> the Store type
@@ -81,7 +82,7 @@ public final class TxCopyingCacheStore<T extends Store> extends AbstractCopyingC
      */
     private static <T extends Store> TxCopyingCacheStore<T> wrap(final T cacheStore, final CacheConfiguration cacheConfiguration) {
         final ReadWriteCopyStrategy<Element> copyStrategyInstance = cacheConfiguration.getCopyStrategyConfiguration()
-            .getCopyStrategyInstance(cacheConfiguration.getClassLoader());
+                .getCopyStrategyInstance(cacheConfiguration.getClassLoader());
         return new TxCopyingCacheStore<T>(cacheStore, cacheConfiguration.isCopyOnRead(), cacheConfiguration.isCopyOnWrite(), copyStrategyInstance, cacheConfiguration.getClassLoader());
     }
 

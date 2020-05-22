@@ -1,26 +1,27 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction.xa.commands;
 
 import net.sf.ehcache.Element;
 import net.sf.ehcache.store.ElementValueComparator;
 import net.sf.ehcache.store.Store;
 import net.sf.ehcache.transaction.SoftLock;
-import net.sf.ehcache.transaction.SoftLockManager;
 import net.sf.ehcache.transaction.SoftLockID;
+import net.sf.ehcache.transaction.SoftLockManager;
 import net.sf.ehcache.transaction.xa.OptimisticLockFailureException;
 import net.sf.ehcache.transaction.xa.XidTransactionID;
 
@@ -36,6 +37,7 @@ public abstract class AbstractStoreCommand implements Command {
 
     /**
      * Create a Store Command
+     *
      * @param oldElement the element in the underlying store at the time this command is created
      * @param newElement the new element to put in the underlying store
      */
@@ -46,6 +48,7 @@ public abstract class AbstractStoreCommand implements Command {
 
     /**
      * Get the element in the underlying store at the time this command is created
+     *
      * @return the old element
      */
     protected Element getOldElement() {
@@ -54,6 +57,7 @@ public abstract class AbstractStoreCommand implements Command {
 
     /**
      * Get the new element to put in the underlying store
+     *
      * @return the new element to put in the underlying store
      */
     protected Element getNewElement() {
@@ -63,7 +67,9 @@ public abstract class AbstractStoreCommand implements Command {
     /**
      * {@inheritDoc}
      */
-    public boolean prepare(Store store, SoftLockManager softLockManager, XidTransactionID transactionId,
+    @Override
+    public boolean prepare(Store store, SoftLockManager softLockManager,
+                           XidTransactionID transactionId,
                            ElementValueComparator comparator) {
         Object objectKey = getObjectKey();
 
@@ -97,6 +103,7 @@ public abstract class AbstractStoreCommand implements Command {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void rollback(Store store, SoftLockManager softLockManager) {
         if (oldElement == null) {
             store.remove(getObjectKey());

@@ -6,6 +6,8 @@ import bitronix.tm.internal.TransactionStatusChangeListener;
 import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceProducer;
+import junit.framework.AssertionFailedError;
+import junit.framework.TestCase;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.CacheStoreHelper;
@@ -13,7 +15,7 @@ import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.store.TxCopyingCacheStore;
 import net.sf.ehcache.transaction.TransactionTimeoutException;
-
+import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +23,6 @@ import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-
-import junit.framework.AssertionFailedError;
-import junit.framework.TestCase;
 
 /**
  * @author Ludovic Orban
@@ -90,10 +89,18 @@ public class XATransactionTest extends TestCase {
         LOG.info("******* END");
     }
 
+    @Ignore
+    public void testPut() throws Exception {
+        tm.begin();
+        cache1.put(new Element(1, "one"));
+        cache2.put(new Element(1, "one"));
+        tm.commit();
+    }
+
     public void testRecoveryWhileTransactionsAreLive() throws Exception {
         tm.begin();
 
-        BitronixTransaction transaction = (BitronixTransaction)tm.getTransaction();
+        BitronixTransaction transaction = (BitronixTransaction) tm.getTransaction();
         transaction.addTransactionStatusChangeListener(new TransactionStatusChangeListener() {
             @Override
             public void statusChanged(int oldStatus, int newStatus) {
@@ -105,7 +112,9 @@ public class XATransactionTest extends TestCase {
                         Recoverer recoverer = TransactionManagerServices.getRecoverer();
                         TransactionManagerServices.getTaskScheduler().cancelRecovery(recoverer);
                         while (recoverer.isRunning()) {
-                            try { Thread.sleep(100); } catch (InterruptedException e) { /* ignore */ }
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) { /* ignore */ }
                         }
 
                         XAResourceProducer txCache1Producer = ResourceRegistrar.get("txCache1");
@@ -147,6 +156,7 @@ public class XATransactionTest extends TestCase {
         BitronixTransaction tx = (BitronixTransaction) tm.getTransaction();
 
         tx.addTransactionStatusChangeListener(new TransactionStatusChangeListener() {
+            @Override
             public void statusChanged(int oldStatus, int newStatus) {
                 if (oldStatus == Status.STATUS_PREPARED) {
 
@@ -175,10 +185,10 @@ public class XATransactionTest extends TestCase {
     }
 
     public void testGetOldElementFromStore() throws Exception {
-        Cache txCache = (Cache)cache1;
+        Cache txCache = (Cache) cache1;
 
         CacheStoreHelper cacheStoreHelper = new CacheStoreHelper(txCache);
-        TxCopyingCacheStore store = (TxCopyingCacheStore)cacheStoreHelper.getStore();
+        TxCopyingCacheStore store = (TxCopyingCacheStore) cacheStoreHelper.getStore();
 
         Element one = new Element(1, "one");
         tm.begin();
@@ -193,8 +203,6 @@ public class XATransactionTest extends TestCase {
 
         assertEquals(oneUp, store.getOldElement(1));
     }
-
-
 
     private static class TxThread extends Thread {
         private volatile boolean failed;

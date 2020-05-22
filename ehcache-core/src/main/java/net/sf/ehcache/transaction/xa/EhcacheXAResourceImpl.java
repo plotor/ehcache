@@ -588,10 +588,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
 
         return ctx;
     }
-
-    /**
-     * {@inheritDoc}
-     */
+    
     @Override
     public XATransactionContext getCurrentTransactionContext() {
         if (currentXid == null) {
