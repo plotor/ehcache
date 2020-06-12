@@ -41,8 +41,7 @@ public class XARequestProcessor {
 
     private static volatile XAThreadPool xaProcessorPool;
 
-    private final ConcurrentMap<Xid, XAThreadPool.MultiRunner> executorMap =
-            new ConcurrentHashMap<Xid, XAThreadPool.MultiRunner>();
+    private final ConcurrentMap<Xid, XAThreadPool.MultiRunner> executorMap = new ConcurrentHashMap<Xid, XAThreadPool.MultiRunner>();
     private final EhcacheXAResourceImpl resourceImpl;
 
     /**
@@ -79,7 +78,8 @@ public class XARequestProcessor {
 
         XAResponse xaResponse;
         try {
-            xaResponse = (XAResponse) multiRunner.execute(new XARequestCallable(resourceImpl, request, request.getXid()));
+            xaResponse = (XAResponse) multiRunner
+                    .execute(new XARequestCallable(resourceImpl, request, request.getXid()));
         } catch (InterruptedException e) {
             cleanupThread(request.getXid());
             throw new EhcacheXAException(e.getMessage(), XAException.XAER_RMERR, e);

@@ -30,7 +30,9 @@ import net.sf.ehcache.transaction.xa.XidTransactionID;
  */
 public abstract class AbstractStoreCommand implements Command {
 
+    /** 旧值 */
     private final Element oldElement;
+    /** 新值 */
     private final Element newElement;
 
     private Element softLockedElement;

@@ -40,10 +40,12 @@ public class TwoPCTest {
 
         cacheManager = new CacheManager(new Configuration());
 
-        cacheManager.addCache(new Cache(new CacheConfiguration().name("xaCache1")
+        cacheManager.addCache(new Cache(new CacheConfiguration()
+                .name("xaCache1")
                 .maxEntriesLocalHeap(10)
                 .transactionalMode(CacheConfiguration.TransactionalMode.XA_STRICT)));
-        cacheManager.addCache(new Cache(new CacheConfiguration().name("xaCache2")
+        cacheManager.addCache(new Cache(new CacheConfiguration()
+                .name("xaCache2")
                 .maxEntriesLocalHeap(10)
                 .transactionalMode(CacheConfiguration.TransactionalMode.XA_STRICT)));
 
@@ -68,6 +70,20 @@ public class TwoPCTest {
     }
 
     @Test
+    public void testPut() throws Exception {
+        clearAll();
+        transactionManager.begin();
+        try {
+            xaCache1.put(new Element("name", "zhenchao"));
+            xaCache2.put(new Element("name", "zhenchao"));
+            transactionManager.commit();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw e;
+        }
+    }
+
+    @Test
     public void testRemoveCachesAfterPhase1() throws Exception {
         clearAll();
         transactionManager.begin();
@@ -86,15 +102,16 @@ public class TwoPCTest {
 
         // Remove the caches between the 1st and 2nd phase of 2PC to make sure the soft locks are in the cache but won't be deserializable.
         // We must also make sure to use at least 2 XA resources to prevent the 1PC optimization to kick in.
-        transactionManager.getCurrentTransaction().addTransactionStatusChangeListener(new TransactionStatusChangeListener() {
-            @Override
-            public void statusChanged(final int oldStatus, final int newStatus) {
-                if (oldStatus == Status.STATUS_PREPARED) {
-                    cacheManager.removeCache("xaCache1");
-                    cacheManager.removeCache("xaCache2");
-                }
-            }
-        });
+        transactionManager.getCurrentTransaction()
+                .addTransactionStatusChangeListener(new TransactionStatusChangeListener() {
+                    @Override
+                    public void statusChanged(final int oldStatus, final int newStatus) {
+                        if (oldStatus == Status.STATUS_PREPARED) {
+                            cacheManager.removeCache("xaCache1");
+                            cacheManager.removeCache("xaCache2");
+                        }
+                    }
+                });
 
         // the TM should be able to commit without problem, the test should just pass.
         transactionManager.commit();

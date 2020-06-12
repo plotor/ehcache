@@ -49,6 +49,7 @@ public class XATransactionContext {
     private final Set<Object> addedKeys = new HashSet<Object>();
     private int sizeModifier;
 
+    /** 记录待执行的 Command */
     private final Map<Object, Command> commands = new LinkedHashMap<Object, Command>();
     private final Store underlyingStore;
 
@@ -68,6 +69,7 @@ public class XATransactionContext {
      * @param element Element the command impacts, may be null
      */
     public void addCommand(final Command command, final Element element) {
+        // 获取元素值对应的 key
         Object key = command.getObjectKey();
 
         if (element != null) {
@@ -76,13 +78,16 @@ public class XATransactionContext {
             commandElements.remove(key);
         }
 
+        // 是 Put 类 Command
         if (command.isPut(key)) {
             boolean removed = removedKeys.remove(key);
             boolean added = addedKeys.add(key);
             if (removed || added && !underlyingStore.containsKey(key)) {
                 sizeModifier++;
             }
-        } else if (command.isRemove(key)) {
+        }
+        // 是 Remove 类 Command
+        else if (command.isRemove(key)) {
             removedKeys.add(key);
             if (addedKeys.remove(key) || underlyingStore.containsKey(key)) {
                 sizeModifier--;

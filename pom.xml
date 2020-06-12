@@ -19,7 +19,7 @@
     </developerConnection>
   </scm>
   <properties>
-    <slf4j.version>1.7.7</slf4j.version>
+    <slf4j.version>1.7.28</slf4j.version>
     <sizeof-agent.version>1.0.1</sizeof-agent.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <surefire.version>2.15</surefire.version>
@@ -46,8 +46,21 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
+        <version>1.7.28</version>
       </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>1.7.28</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.17</version>
+        <scope>test</scope>
+      </dependency>
+
       <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>statistics</artifactId>

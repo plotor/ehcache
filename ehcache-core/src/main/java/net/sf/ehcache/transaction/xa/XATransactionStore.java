@@ -67,6 +67,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     private final Ehcache cache;
     private final EhcacheXAResourceImpl recoveryResource;
 
+    /** 记录 Transaction 与对应 XAResource 之间的映射关系 */
     private final ConcurrentHashMap<Transaction, EhcacheXAResource> transactionToXAResourceMap = new ConcurrentHashMap<Transaction, EhcacheXAResource>();
     private final ConcurrentHashMap<Transaction, Long> transactionToTimeoutMap = new ConcurrentHashMap<Transaction, Long>();
 
@@ -123,6 +124,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     }
 
     private Transaction getCurrentTransaction() throws SystemException {
+        // 如果使用的是 bitronix，则这里是 BitronixTransaction
         Transaction transaction = transactionManagerLookup.getTransactionManager().getTransaction();
         if (transaction == null) {
             throw new TransactionException("JTA transaction not started");
@@ -137,14 +139,16 @@ public class XATransactionStore extends AbstractTransactionStore {
      * @throws SystemException when something goes wrong with the transaction manager
      */
     public EhcacheXAResourceImpl getOrCreateXAResource() throws SystemException {
+        // 获取对应的 Transaction 实现，例如 BitronixTransaction
         Transaction transaction = getCurrentTransaction();
         EhcacheXAResourceImpl xaResource = (EhcacheXAResourceImpl) transactionToXAResourceMap.get(transaction);
         if (xaResource == null) {
             LOG.debug("creating new XAResource");
+            // 新建一个 XAResource 对象
             xaResource = new EhcacheXAResourceImpl(cache, underlyingStore, transactionManagerLookup,
-                    softLockManager, transactionIdFactory, comparator, commitObserver, rollbackObserver,
-                    recoveryObserver);
+                    softLockManager, transactionIdFactory, comparator, commitObserver, rollbackObserver, recoveryObserver);
             transactionToXAResourceMap.put(transaction, xaResource);
+            // 注册一个 CleanupXAResource，用于在提交或回滚事务时清空当前 Transaction
             xaResource.addTwoPcExecutionListener(new CleanupXAResource(getCurrentTransaction()));
         }
         return xaResource;
@@ -179,10 +183,13 @@ public class XATransactionStore extends AbstractTransactionStore {
 
     private XATransactionContext getOrCreateTransactionContext() {
         try {
+            // 获取当前 Transaction 对应的 XAResource 对象
             EhcacheXAResourceImpl xaResource = getOrCreateXAResource();
+            // 获取对应的 XATransactionContext
             XATransactionContext transactionContext = xaResource.getCurrentTransactionContext();
 
             if (transactionContext == null) {
+                // 注册当前 XAResource 到 TM
                 transactionManagerLookup.register(xaResource, false);
                 LOG.debug("creating new XA context");
                 transactionContext = xaResource.createTransactionContext();
@@ -487,8 +494,10 @@ public class XATransactionStore extends AbstractTransactionStore {
     public boolean put(Element element) throws CacheException {
         LOG.debug("cache {} put {}", cache.getName(), element);
         // this forces enlistment so the XA transaction timeout can be propagated to the XA resource
+        // 获取当前 Transaction 对应的上下文对象，期间会尝试注册 XAResource 到 TM
         getOrCreateTransactionContext();
 
+        // 获取 key 对应的旧值
         Element oldElement = getQuietFromUnderlyingStore(element.getObjectKey());
         return internalPut(new StorePutCommand(oldElement, element));
     }
@@ -512,17 +521,19 @@ public class XATransactionStore extends AbstractTransactionStore {
     }
 
     private boolean internalPut(final StorePutCommand putCommand) {
+        // 获取待写入的元素值
         final Element element = putCommand.getElement();
-        boolean isNull;
         if (element == null) {
             return true;
         }
+        // 获取当前事务对应的上下文
         XATransactionContext context = getOrCreateTransactionContext();
         // In case this key is currently being updated...
-        isNull = underlyingStore.get(element.getKey()) == null;
+        boolean isNull = underlyingStore.get(element.getKey()) == null; // 判断当前 key 是否不存在
         if (isNull) {
             isNull = context.get(element.getKey()) == null;
         }
+        // 添加 command 到事务上下文中
         context.addCommand(putCommand, element);
         return isNull;
     }
