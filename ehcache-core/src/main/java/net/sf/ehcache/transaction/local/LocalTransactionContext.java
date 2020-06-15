@@ -1,25 +1,27 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction.local;
 
-import net.sf.ehcache.transaction.SoftLock;
-import net.sf.ehcache.transaction.TransactionException;
-import net.sf.ehcache.transaction.TransactionID;
-import net.sf.ehcache.transaction.TransactionIDFactory;
-import net.sf.ehcache.transaction.TransactionTimeoutException;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import net.sf.ehcache.transaction.error.TransactionException;
+import net.sf.ehcache.transaction.error.TransactionTimeoutException;
+import net.sf.ehcache.transaction.id.TransactionID;
+import net.sf.ehcache.transaction.id.TransactionIDFactory;
+import net.sf.ehcache.transaction.lock.SoftLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A local transaction's thread context
@@ -51,6 +51,7 @@ public class LocalTransactionContext {
 
     /**
      * Create a new LocalTransactionContext
+     *
      * @param transactionTimeout the timeout before the context expires
      * @param transactionIdFactory the transaction ID factory to retrieve a new transaction id from
      */
@@ -63,6 +64,7 @@ public class LocalTransactionContext {
 
     /**
      * Check if the context timed out
+     *
      * @return true if the context timed out, false otherwise
      */
     public boolean timedOut() {
@@ -71,12 +73,13 @@ public class LocalTransactionContext {
 
     /**
      * Get the time until this context will expire
+     *
      * @return the time in milliseconds after which this context will expire
      */
     public long timeBeforeTimeout() {
         return Math.max(0, expirationTimestamp - MILLISECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS));
     }
-    
+
     /**
      * Mark the context for rollback
      */
@@ -86,6 +89,7 @@ public class LocalTransactionContext {
 
     /**
      * Register a soft lock in the context
+     *
      * @param cacheName the name of the cache this soft lock is in
      * @param store the LocalTransactionStore this soft lock is in
      * @param softLock the soft lock
@@ -101,8 +105,10 @@ public class LocalTransactionContext {
     }
 
     //todo this method isn't needed if there is no copy on read/write in the underlying store
+
     /**
      * Update a soft lock already registered in the context
+     *
      * @param cacheName the name of the cache this soft lock is in
      * @param softLock the soft lock
      */
@@ -114,6 +120,7 @@ public class LocalTransactionContext {
 
     /**
      * Get all soft locks registered in this context for a specific cache
+     *
      * @param cacheName the name of the cache
      * @return a List of registered soft locks for this cache
      */
@@ -128,6 +135,7 @@ public class LocalTransactionContext {
 
     /**
      * Check if anything was locked in this transaction's context
+     *
      * @return true if at least one soft lock got registered, false otherwise
      */
     public boolean hasLockedAnything() {
@@ -136,6 +144,7 @@ public class LocalTransactionContext {
 
     /**
      * Commit all work done in the context and release all registered soft locks
+     *
      * @param ignoreTimeout true if commit should proceed no matter the timeout
      */
     public void commit(boolean ignoreTimeout) {
@@ -208,6 +217,7 @@ public class LocalTransactionContext {
 
     /**
      * Get the transaction ID of the context
+     *
      * @return the transaction ID
      */
     public TransactionID getTransactionId() {
@@ -216,6 +226,7 @@ public class LocalTransactionContext {
 
     /**
      * Add a TransactionListener to this context
+     *
      * @param listener the listener
      */
     public void addListener(TransactionListener listener) {
@@ -270,8 +281,8 @@ public class LocalTransactionContext {
                     softLock.unlock();
                     LOG.debug("unlocked {}", softLock);
                 } catch (Exception e) {
-                  success = false;
-                  LOG.error("error unlocking " + softLock, e);
+                    success = false;
+                    LOG.error("error unlocking " + softLock, e);
                 }
             }
         }

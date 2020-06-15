@@ -1,20 +1,20 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache.transaction;
 
-import net.sf.ehcache.transaction.TransactionID;
-
+import net.sf.ehcache.transaction.id.TransactionID;
 import org.terracotta.modules.ehcache.ToolkitInstanceFactory;
 
 import java.io.Serializable;
 
 public class SerializedReadCommittedClusteredSoftLock implements Serializable {
 
-  private static final long                                 serialVersionUID = -766870846218858666L;
+  private static final long serialVersionUID = -766870846218858666L;
 
-  private final TransactionID                               transactionID;
-  private final Object                                      deserializedKey;
+  private final TransactionID transactionID;
+  private final Object deserializedKey;
   private transient volatile ReadCommittedClusteredSoftLock softLock;
 
   public SerializedReadCommittedClusteredSoftLock(TransactionID transactionID, Object deserializedKey) {
@@ -25,7 +25,9 @@ public class SerializedReadCommittedClusteredSoftLock implements Serializable {
   public ReadCommittedClusteredSoftLock getSoftLock(ToolkitInstanceFactory toolkitInstanceFactory,
                                                     ReadCommittedClusteredSoftLockFactory factory) {
     ReadCommittedClusteredSoftLock rv = softLock;
-    if (rv != null) { return rv; }
+    if (rv != null) {
+      return rv;
+    }
     synchronized (this) {
       softLock = new ReadCommittedClusteredSoftLock(toolkitInstanceFactory, factory, transactionID, deserializedKey);
       rv = softLock;
@@ -38,8 +40,12 @@ public class SerializedReadCommittedClusteredSoftLock implements Serializable {
     if (object instanceof SerializedReadCommittedClusteredSoftLock) {
       SerializedReadCommittedClusteredSoftLock other = (SerializedReadCommittedClusteredSoftLock) object;
 
-      if (!transactionID.equals(other.transactionID)) { return false; }
-      if (!deserializedKey.equals(other.deserializedKey)) { return false; }
+      if (!transactionID.equals(other.transactionID)) {
+        return false;
+      }
+      if (!deserializedKey.equals(other.deserializedKey)) {
+        return false;
+      }
 
       return true;
     }

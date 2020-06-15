@@ -20,7 +20,7 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.store.compound.ReadWriteCopyStrategy;
 import net.sf.ehcache.transaction.AbstractTransactionStore;
-import net.sf.ehcache.transaction.SoftLockID;
+import net.sf.ehcache.transaction.lock.SoftLockID;
 
 /**
  * Copies elements, either on read, write or both before using the underlying store to actually store things.

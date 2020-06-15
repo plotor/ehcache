@@ -23,8 +23,8 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.TransactionController;
 import net.sf.ehcache.store.ElementValueComparator;
 import net.sf.ehcache.transaction.AbstractTransactionStore;
-import net.sf.ehcache.transaction.TransactionException;
-import net.sf.ehcache.transaction.TransactionID;
+import net.sf.ehcache.transaction.error.TransactionException;
+import net.sf.ehcache.transaction.id.TransactionID;
 import net.sf.ehcache.transaction.manager.TransactionManagerLookup;
 import net.sf.ehcache.transaction.xa.EhcacheXAResource;
 import net.sf.ehcache.transaction.xa.XAExecutionListener;
@@ -66,6 +66,7 @@ public class JtaLocalTransactionStore extends AbstractTransactionStore {
 
     /**
      * Create a new JtaLocalTransactionStore instance
+     *
      * @param underlyingStore the underlying LocalTransactionStore
      * @param transactionManagerLookup the TransactionManagerLookup
      * @param transactionController the TransactionController

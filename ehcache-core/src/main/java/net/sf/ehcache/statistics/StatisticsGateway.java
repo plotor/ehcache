@@ -1,17 +1,17 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package net.sf.ehcache.statistics;
@@ -24,13 +24,12 @@ import net.sf.ehcache.config.ManagementRESTServiceConfiguration;
 import net.sf.ehcache.statistics.extended.ExtendedStatistics;
 import net.sf.ehcache.statistics.extended.ExtendedStatistics.Result;
 import net.sf.ehcache.statistics.extended.ExtendedStatisticsImpl;
-import net.sf.ehcache.store.StoreOperationOutcomes;
 import net.sf.ehcache.store.StoreOperationOutcomes.GetOutcome;
 import net.sf.ehcache.store.StoreOperationOutcomes.PutOutcome;
 import net.sf.ehcache.store.StoreOperationOutcomes.RemoveOutcome;
-import net.sf.ehcache.transaction.xa.XaCommitOutcome;
-import net.sf.ehcache.transaction.xa.XaRecoveryOutcome;
-import net.sf.ehcache.transaction.xa.XaRollbackOutcome;
+import net.sf.ehcache.transaction.xa.statistics.XaCommitOutcome;
+import net.sf.ehcache.transaction.xa.statistics.XaRecoveryOutcome;
+import net.sf.ehcache.transaction.xa.statistics.XaRollbackOutcome;
 import org.terracotta.statistics.StatisticsManager;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * StatisticsGateway rollup class.
- * 
+ *
  * @author cschanck
  */
 public class StatisticsGateway implements FlatStatistics {
@@ -68,7 +67,7 @@ public class StatisticsGateway implements FlatStatistics {
 
     /**
      * Instantiates a new statistics placeholder.
-     * 
+     *
      * @param ehcache the ehcache
      * @param executor the executor
      */
@@ -77,14 +76,14 @@ public class StatisticsGateway implements FlatStatistics {
         statsManager.root(ehcache);
         this.assocCacheName = ehcache.getName();
         ManagementRESTServiceConfiguration mRest = null;
-        if (ehcache != null && ehcache.getCacheManager() != null && 
+        if (ehcache != null && ehcache.getCacheManager() != null &&
                 ehcache.getCacheManager().getConfiguration() != null) {
             mRest = ehcache.getCacheManager().getConfiguration().getManagementRESTService();
         }
 
         this.extended = new ExtendedStatisticsImpl(statsManager, executor, DEFAULT_TIME_TO_DISABLE_MINS, TimeUnit.MINUTES,
-                getProperSampleHistorySize(mRest), 
-                getProperSampleIntervalSeconds(mRest), 
+                getProperSampleHistorySize(mRest),
+                getProperSampleIntervalSeconds(mRest),
                 getProperSampleSearchIntervalSeconds(mRest));
 
         this.core = new CoreStatisticsImpl(extended);
@@ -104,7 +103,7 @@ public class StatisticsGateway implements FlatStatistics {
 
     /**
      * Gets the core.
-     * 
+     *
      * @return the core
      */
     public CoreStatistics getCore() {
@@ -113,7 +112,7 @@ public class StatisticsGateway implements FlatStatistics {
 
     /**
      * Gets the extended.
-     * 
+     *
      * @return the extended
      */
     public ExtendedStatistics getExtended() {
@@ -122,7 +121,7 @@ public class StatisticsGateway implements FlatStatistics {
 
     /**
      * Gets the associated cache name.
-     * 
+     *
      * @return the associated cache name
      */
     public String getAssociatedCacheName() {

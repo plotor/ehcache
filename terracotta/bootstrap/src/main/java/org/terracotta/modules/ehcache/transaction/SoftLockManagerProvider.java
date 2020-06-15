@@ -1,14 +1,14 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache.transaction;
 
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
-import net.sf.ehcache.transaction.SoftLockManager;
-
+import net.sf.ehcache.transaction.lock.SoftLockManager;
 import org.terracotta.modules.ehcache.ToolkitInstanceFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,10 +16,10 @@ import java.util.concurrent.ConcurrentMap;
 
 public class SoftLockManagerProvider {
   private final ConcurrentMap<String, SoftLockManager> softLockFactories = new ConcurrentHashMap<String, SoftLockManager>();
-  private final ToolkitInstanceFactory                 toolkitInstanceFactory;
+  private final ToolkitInstanceFactory toolkitInstanceFactory;
 
   public SoftLockManagerProvider(
-                                 ToolkitInstanceFactory toolkitInstanceFactory) {
+          ToolkitInstanceFactory toolkitInstanceFactory) {
     this.toolkitInstanceFactory = toolkitInstanceFactory;
   }
 
@@ -28,7 +28,7 @@ public class SoftLockManagerProvider {
     SoftLockManager softLockFactory = softLockFactories.get(name);
     if (softLockFactory == null) {
       softLockFactory = new ReadCommittedClusteredSoftLockFactory(toolkitInstanceFactory, cache.getCacheManager()
-          .getName(), cache.getName());
+              .getName(), cache.getName());
       SoftLockManager old = softLockFactories.putIfAbsent(name, softLockFactory);
       if (old == null) {
         // Put successful add a Cache Event Listener.

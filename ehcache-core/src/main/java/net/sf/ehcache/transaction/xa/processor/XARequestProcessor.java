@@ -16,8 +16,8 @@
 
 package net.sf.ehcache.transaction.xa.processor;
 
-import net.sf.ehcache.transaction.xa.EhcacheXAException;
 import net.sf.ehcache.transaction.xa.EhcacheXAResourceImpl;
+import net.sf.ehcache.transaction.xa.error.EhcacheXAException;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;

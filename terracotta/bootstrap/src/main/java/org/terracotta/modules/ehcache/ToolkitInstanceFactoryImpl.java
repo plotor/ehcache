@@ -1,8 +1,18 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache;
 
+import com.terracotta.entity.ClusteredEntityManager;
+import com.terracotta.entity.ehcache.ClusteredCache;
+import com.terracotta.entity.ehcache.ClusteredCacheConfiguration;
+import com.terracotta.entity.ehcache.ClusteredCacheManager;
+import com.terracotta.entity.ehcache.ClusteredCacheManagerConfiguration;
+import com.terracotta.entity.ehcache.EhcacheEntitiesNaming;
+import com.terracotta.entity.ehcache.ToolkitBackedClusteredCache;
+import com.terracotta.entity.ehcache.ToolkitBackedClusteredCacheManager;
+import static java.lang.String.format;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.ConfigurationFactory;
@@ -12,8 +22,8 @@ import net.sf.ehcache.config.TerracottaConfiguration;
 import net.sf.ehcache.config.TerracottaConfiguration.Consistency;
 import net.sf.ehcache.config.generator.ConfigurationUtil;
 import net.sf.ehcache.search.attribute.AttributeExtractor;
-import net.sf.ehcache.transaction.Decision;
-import net.sf.ehcache.transaction.TransactionID;
+import net.sf.ehcache.transaction.id.Decision;
+import net.sf.ehcache.transaction.id.TransactionID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.modules.ehcache.async.AsyncConfig;
@@ -50,15 +60,6 @@ import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
-import com.terracotta.entity.ClusteredEntityManager;
-import com.terracotta.entity.ehcache.ClusteredCache;
-import com.terracotta.entity.ehcache.ClusteredCacheConfiguration;
-import com.terracotta.entity.ehcache.ClusteredCacheManager;
-import com.terracotta.entity.ehcache.ClusteredCacheManagerConfiguration;
-import com.terracotta.entity.ehcache.EhcacheEntitiesNaming;
-import com.terracotta.entity.ehcache.ToolkitBackedClusteredCache;
-import com.terracotta.entity.ehcache.ToolkitBackedClusteredCacheManager;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -76,43 +77,41 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.String.format;
-
 public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
 
-  public static final Logger           LOGGER                                   = LoggerFactory
-                                                                                      .getLogger(ToolkitInstanceFactoryImpl.class);
+  public static final Logger LOGGER = LoggerFactory
+          .getLogger(ToolkitInstanceFactoryImpl.class);
   private static final String CONFIG_LOGGER_NAME = "com.terracotta.ehcache.config";
 
-  public static final String  DELIMITER                                = "|";
-  private static final String EVENT_NOTIFIER_SUFFIX                    = "event-notifier";
-  private static final String DISPOSAL_NOTIFIER_SUFFIX                 = "disposal-notifier";
-  private static final String EHCACHE_NAME_PREFIX                      = "__tc_clustered-ehcache";
-  private static final String CONFIG_NOTIFIER_SUFFIX                   = "config-notifier";
-  private static final String EHCACHE_TXNS_DECISION_STATE_MAP_NAME     = EHCACHE_NAME_PREFIX + DELIMITER
-                                                                                    + "txnsDecision";
-  private static final String ALL_SOFT_LOCKS_MAP_SUFFIX                = "softLocks";
-  private static final String NEW_SOFT_LOCKS_LIST_SUFFIX               = "newSoftLocks";
+  public static final String DELIMITER = "|";
+  private static final String EVENT_NOTIFIER_SUFFIX = "event-notifier";
+  private static final String DISPOSAL_NOTIFIER_SUFFIX = "disposal-notifier";
+  private static final String EHCACHE_NAME_PREFIX = "__tc_clustered-ehcache";
+  private static final String CONFIG_NOTIFIER_SUFFIX = "config-notifier";
+  private static final String EHCACHE_TXNS_DECISION_STATE_MAP_NAME = EHCACHE_NAME_PREFIX + DELIMITER
+          + "txnsDecision";
+  private static final String ALL_SOFT_LOCKS_MAP_SUFFIX = "softLocks";
+  private static final String NEW_SOFT_LOCKS_LIST_SUFFIX = "newSoftLocks";
 
-  private static final String LOCK_TAG                                 = "::LOCK";
+  private static final String LOCK_TAG = "::LOCK";
 
-  static final String         CLUSTERED_STORE_CONFIG_MAP               = EHCACHE_NAME_PREFIX + DELIMITER + "configMap";
+  static final String CLUSTERED_STORE_CONFIG_MAP = EHCACHE_NAME_PREFIX + DELIMITER + "configMap";
 
-  private static final String EHCACHE_TXNS_SOFTLOCK_WRITE_LOCK_NAME    = EHCACHE_NAME_PREFIX + DELIMITER
-                                                                                    + "softWriteLock";
+  private static final String EHCACHE_TXNS_SOFTLOCK_WRITE_LOCK_NAME = EHCACHE_NAME_PREFIX + DELIMITER
+          + "softWriteLock";
 
-  private static final String EHCACHE_TXNS_SOFTLOCK_FREEZE_LOCK_NAME   = EHCACHE_NAME_PREFIX + DELIMITER
-                                                                                    + "softFreezeLock";
+  private static final String EHCACHE_TXNS_SOFTLOCK_FREEZE_LOCK_NAME = EHCACHE_NAME_PREFIX + DELIMITER
+          + "softFreezeLock";
   private static final String EHCACHE_TXNS_SOFTLOCK_NOTIFIER_LOCK_NAME = EHCACHE_NAME_PREFIX + DELIMITER
-                                                                                    + "softNotifierLock";
+          + "softNotifierLock";
   public static final int RETRY_MARK_IN_USE_AFTER_REJOIN = 5;
 
-  protected final Toolkit                 toolkit;
-  private final WANUtil                   wanUtil;
-  private final ClusteredEntityManager    clusteredEntityManager;
-  private volatile ClusteredCacheManager  clusteredCacheManagerEntity;
-  private final EntityNamesHolder         entityNames;
-  private final Watchdog                  wanWatchdog;
+  protected final Toolkit toolkit;
+  private final WANUtil wanUtil;
+  private final ClusteredEntityManager clusteredEntityManager;
+  private volatile ClusteredCacheManager clusteredCacheManagerEntity;
+  private final EntityNamesHolder entityNames;
+  private final Watchdog wanWatchdog;
 
   public ToolkitInstanceFactoryImpl(final TerracottaClientConfiguration terracottaClientConfiguration,
                                     final String productId, ClassLoader loader) {
@@ -150,13 +149,15 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   private void updateDefaultNonStopConfig(Toolkit toolkitParam) {
     ToolkitNonstopDisableConfig disableNonStop = new ToolkitNonstopDisableConfig();
     NonStopConfigurationRegistry nonStopConfigurationRegistry = toolkitParam.getFeature(ToolkitFeatureType.NONSTOP)
-        .getNonStopConfigurationRegistry();
+            .getNonStopConfigurationRegistry();
     for (ToolkitObjectType t : ToolkitObjectType.values()) {
       try {
         nonStopConfigurationRegistry.registerForType(disableNonStop, t);
       } catch (UnsupportedOperationException e) {
         // expected for Barrier and BlockingQueue.
-        if (!(t == ToolkitObjectType.BARRIER || t == ToolkitObjectType.BLOCKING_QUEUE)) { throw e; }
+        if (!(t == ToolkitObjectType.BARRIER || t == ToolkitObjectType.BLOCKING_QUEUE)) {
+          throw e;
+        }
       }
     }
   }
@@ -202,20 +203,20 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   public ToolkitCacheInternal<String, Serializable> getOrCreateToolkitCache(final Ehcache cache) {
     final String cacheManagerName = getCacheManagerName(cache);
     final String cacheName = cache.getName();
-    
+
     ToolkitCacheInternal<String, Serializable> toolkitCache = getOrCreateRegularToolkitCache(
-        cacheManagerName, cacheName, cache.getCacheConfiguration());
-    if(wanUtil.isWanEnabledCache(cacheManagerName, cacheName)) {
+            cacheManagerName, cacheName, cache.getCacheConfiguration());
+    if (wanUtil.isWanEnabledCache(cacheManagerName, cacheName)) {
       final boolean replicaCache = wanUtil.isCacheReplica(cacheManagerName, cacheName);
       final boolean bidirectional = wanUtil.isCacheBidirectional(cacheManagerName, cacheName);
       toolkitCache = createWanAwareToolkitCache(cacheManagerName, cacheName, toolkitCache,
-                                                cache.getCacheConfiguration(), !replicaCache, bidirectional);
+              cache.getCacheConfiguration(), !replicaCache, bidirectional);
 
       if (replicaCache) {
         LOGGER.info("Pinning the Cache '{}' belonging to Cache Manager '{}' " +
-                    "and setting its TTI and TTL values to zero as it is a WAN Replica Cache. " +
-                    "This cache's capacity will be controlled by its Master cache.",
-            cacheName, cacheManagerName);
+                        "and setting its TTI and TTL values to zero as it is a WAN Replica Cache. " +
+                        "This cache's capacity will be controlled by its Master cache.",
+                cacheName, cacheManagerName);
         PinningConfiguration pinningConfiguration = new PinningConfiguration();
         pinningConfiguration.setStore(PinningConfiguration.Store.INCACHE.toString());
         cache.getCacheConfiguration().addPinning(pinningConfiguration);
@@ -239,7 +240,7 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
                                                                                     final boolean masterCache,
                                                                                     final boolean bidirectional) {
     final ToolkitCacheInternal<String, Serializable> toolkitCache =
-        getOrCreateRegularToolkitCache(cacheManagerName, cacheName, ehcacheConfig);
+            getOrCreateRegularToolkitCache(cacheManagerName, cacheName, ehcacheConfig);
     return createWanAwareToolkitCache(cacheManagerName, cacheName, toolkitCache, ehcacheConfig, masterCache, bidirectional);
   }
 
@@ -251,10 +252,10 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
                                                                                 final boolean bidirectional) {
     final String fullyQualifiedCacheName = EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName);
     final ToolkitMap<String, Serializable> configMap = getOrCreateConfigMap(fullyQualifiedCacheName);
-    return new WanAwareToolkitCache<String, Serializable>((BufferingToolkitCache<String,Serializable>)toolkitCache, configMap,
-                                                          toolkit.getFeature(ToolkitFeatureType.NONSTOP),
-                                                          toolkit.getLock(toolkitCache.getName() + LOCK_TAG),
-                                                          cacheConfiguration, masterCache, bidirectional);
+    return new WanAwareToolkitCache<String, Serializable>((BufferingToolkitCache<String, Serializable>) toolkitCache, configMap,
+            toolkit.getFeature(ToolkitFeatureType.NONSTOP),
+            toolkit.getLock(toolkitCache.getName() + LOCK_TAG),
+            cacheConfiguration, masterCache, bidirectional);
   }
 
   private ToolkitCacheInternal<String, Serializable> getOrCreateRegularToolkitCache(final String cacheManagerName,
@@ -271,7 +272,7 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   private ToolkitCacheInternal<String, Serializable> getOrCreateToolkitCache(final String fullyQualifiedCacheName,
                                                                              final Configuration toolkitCacheConfig) {
     return (ToolkitCacheInternal<String, Serializable>) toolkit.getCache(fullyQualifiedCacheName, toolkitCacheConfig,
-                                                                         Serializable.class);
+            Serializable.class);
   }
 
   @Override
@@ -281,9 +282,9 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
 
   private ToolkitNotifier<CacheConfigChangeNotificationMsg> getOrCreateConfigChangeNotifier(String cacheManagerName, String cacheName) {
     String notifierName = EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName) + DELIMITER
-                          + CONFIG_NOTIFIER_SUFFIX;
+            + CONFIG_NOTIFIER_SUFFIX;
     ToolkitNotifier<CacheConfigChangeNotificationMsg> notifier = toolkit
-        .getNotifier(notifierName, CacheConfigChangeNotificationMsg.class);
+            .getNotifier(notifierName, CacheConfigChangeNotificationMsg.class);
     addCacheMetaInfo(cacheName, ToolkitObjectType.NOTIFIER, notifierName);
     return notifier;
   }
@@ -296,14 +297,14 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   @Override
   public ToolkitNotifier<CacheDisposalNotification> getOrCreateCacheDisposalNotifier(Ehcache cache) {
     return toolkit.getNotifier(EhcacheEntitiesNaming.getToolkitCacheNameFor(cache.getCacheManager().getName(), cache.getName())
-                               + DELIMITER + DISPOSAL_NOTIFIER_SUFFIX, CacheDisposalNotification.class);
+            + DELIMITER + DISPOSAL_NOTIFIER_SUFFIX, CacheDisposalNotification.class);
   }
 
   private ToolkitNotifier<CacheEventNotificationMsg> getOrCreateCacheEventNotifier(String cacheManagerName, String cacheName) {
     String notifierName = EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName) + DELIMITER
-                          + EVENT_NOTIFIER_SUFFIX;
+            + EVENT_NOTIFIER_SUFFIX;
     ToolkitNotifier<CacheEventNotificationMsg> notifier = toolkit.getNotifier(notifierName,
-                                                                              CacheEventNotificationMsg.class);
+            CacheEventNotificationMsg.class);
     addCacheMetaInfo(cacheName, ToolkitObjectType.NOTIFIER, notifierName);
     return notifier;
   }
@@ -355,12 +356,14 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
 
   private static boolean isPinnedInCache(final CacheConfiguration ehcacheConfig) {
     return ehcacheConfig.getPinningConfiguration() != null
-           && ehcacheConfig.getPinningConfiguration().getStore() == PinningConfiguration.Store.INCACHE;
+            && ehcacheConfig.getPinningConfiguration().getStore() == PinningConfiguration.Store.INCACHE;
   }
 
   private static int calculateCorrectConcurrency(CacheConfiguration cacheConfiguration) {
     int maxElementOnDisk = cacheConfiguration.getMaxElementsOnDisk();
-    if (maxElementOnDisk <= 0 || maxElementOnDisk >= ToolkitConfigFields.DEFAULT_CONCURRENCY) { return ToolkitConfigFields.DEFAULT_CONCURRENCY; }
+    if (maxElementOnDisk <= 0 || maxElementOnDisk >= ToolkitConfigFields.DEFAULT_CONCURRENCY) {
+      return ToolkitConfigFields.DEFAULT_CONCURRENCY;
+    }
     int concurrency = 1;
     while (concurrency * 2 <= maxElementOnDisk) {// this while loop is not very time consuming, maximum it will do 8
       // iterations
@@ -371,7 +374,7 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
 
   private static boolean isPinnedInLocalMemory(CacheConfiguration ehcacheConfig) {
     return ehcacheConfig.getPinningConfiguration() != null
-           && ehcacheConfig.getPinningConfiguration().getStore() == PinningConfiguration.Store.LOCALMEMORY;
+            && ehcacheConfig.getPinningConfiguration().getStore() == PinningConfiguration.Store.LOCALMEMORY;
   }
 
   @Override
@@ -424,11 +427,11 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
                                                                                                                             String cacheName) {
     // TODO: what should be the local cache config for the map?
     Configuration config = new ToolkitStoreConfigBuilder()
-        .consistency(org.terracotta.toolkit.store.ToolkitConfigFields.Consistency.STRONG).build();
+            .consistency(org.terracotta.toolkit.store.ToolkitConfigFields.Consistency.STRONG).build();
     String softLockCacheName = EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName) + DELIMITER
-                               + ALL_SOFT_LOCKS_MAP_SUFFIX;
+            + ALL_SOFT_LOCKS_MAP_SUFFIX;
     ToolkitCache<String, SerializedReadCommittedClusteredSoftLock> map = toolkit
-        .getCache(softLockCacheName, config, SerializedReadCommittedClusteredSoftLock.class);
+            .getCache(softLockCacheName, config, SerializedReadCommittedClusteredSoftLock.class);
     addCacheMetaInfo(cacheName, ToolkitObjectType.CACHE, softLockCacheName);
     return new SerializedToolkitCache<ClusteredSoftLockIDKey, SerializedReadCommittedClusteredSoftLock>(map);
 
@@ -438,9 +441,9 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   public ToolkitMap<SerializedReadCommittedClusteredSoftLock, Integer> getOrCreateNewSoftLocksSet(String cacheManagerName,
                                                                                                   String cacheName) {
     String softLockMapName = EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName) + DELIMITER
-                             + NEW_SOFT_LOCKS_LIST_SUFFIX;
+            + NEW_SOFT_LOCKS_LIST_SUFFIX;
     ToolkitMap<SerializedReadCommittedClusteredSoftLock, Integer> softLockMap = toolkit
-        .getMap(softLockMapName, SerializedReadCommittedClusteredSoftLock.class, Integer.class);
+            .getMap(softLockMapName, SerializedReadCommittedClusteredSoftLock.class, Integer.class);
     addCacheMetaInfo(cacheName, ToolkitObjectType.MAP, softLockMapName);
     return softLockMap;
   }
@@ -482,10 +485,10 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   public SerializedToolkitCache<TransactionID, Decision> getOrCreateTransactionCommitStateMap(String cacheManagerName) {
     // TODO: what should be the local cache config for the map?
     Configuration config = new ToolkitStoreConfigBuilder()
-        .consistency(org.terracotta.toolkit.store.ToolkitConfigFields.Consistency.SYNCHRONOUS_STRONG).build();
+            .consistency(org.terracotta.toolkit.store.ToolkitConfigFields.Consistency.SYNCHRONOUS_STRONG).build();
     ToolkitCache<String, Decision> map = toolkit.getCache(cacheManagerName + DELIMITER
-                                                              + EHCACHE_TXNS_DECISION_STATE_MAP_NAME, config,
-                                                          Decision.class);
+                    + EHCACHE_TXNS_DECISION_STATE_MAP_NAME, config,
+            Decision.class);
     return new SerializedToolkitCache<TransactionID, Decision>(map);
   }
 
@@ -494,16 +497,14 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
                                           Object key) {
 
     return toolkit.getLock(EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName) + DELIMITER
-                           + serializeToString(transactionID) + DELIMITER + serializeToString(key) + DELIMITER
-                           + EHCACHE_TXNS_SOFTLOCK_WRITE_LOCK_NAME);
+            + serializeToString(transactionID) + DELIMITER + serializeToString(key) + DELIMITER
+            + EHCACHE_TXNS_SOFTLOCK_WRITE_LOCK_NAME);
   }
 
   @Override
   public ToolkitLock getLockForCache(Ehcache cache, String lockName) {
     return toolkit.getLock(getFullyQualifiedCacheName(cache) + DELIMITER + lockName);
   }
-
-
 
   private static String serializeToString(Object serializable) {
     try {
@@ -518,8 +519,8 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
                                                     TransactionID transactionID, Object key) {
 
     return toolkit.getReadWriteLock(EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName) + DELIMITER
-                                    + serializeToString(transactionID) + DELIMITER + serializeToString(key) + DELIMITER
-                                    + EHCACHE_TXNS_SOFTLOCK_FREEZE_LOCK_NAME);
+            + serializeToString(transactionID) + DELIMITER + serializeToString(key) + DELIMITER
+            + EHCACHE_TXNS_SOFTLOCK_FREEZE_LOCK_NAME);
   }
 
   @Override
@@ -527,8 +528,8 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
                                                       TransactionID transactionID, Object key) {
 
     return toolkit.getReadWriteLock(EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName) + DELIMITER
-                                    + serializeToString(transactionID) + DELIMITER + serializeToString(key) + DELIMITER
-                                    + EHCACHE_TXNS_SOFTLOCK_NOTIFIER_LOCK_NAME);
+            + serializeToString(transactionID) + DELIMITER + serializeToString(key) + DELIMITER
+            + EHCACHE_TXNS_SOFTLOCK_NOTIFIER_LOCK_NAME);
   }
 
   @Override
@@ -538,8 +539,8 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
     getOrCreateCacheEventNotifier(cacheManagerName, cacheName).destroy();
     getOrCreateConfigChangeNotifier(cacheManagerName, cacheName).destroy();
     getOrCreateToolkitCache(EhcacheEntitiesNaming.getToolkitCacheNameFor(cacheManagerName, cacheName),
-                            new ToolkitCacheConfigBuilder().maxCountLocalHeap(1).maxBytesLocalOffheap(0).build())
-        .destroy();
+            new ToolkitCacheConfigBuilder().maxCountLocalHeap(1).maxBytesLocalOffheap(0).build())
+            .destroy();
 
     // We always write the transactional mode into this config map, so theoretically if the cache existed, this map
     // won't be empty.
@@ -553,16 +554,16 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   protected void addNonStopConfigForCache(final CacheConfiguration ehcacheConfig, final String fullyQualifiedCacheName) {
     final TerracottaConfiguration terracottaConfiguration = ehcacheConfig.getTerracottaConfiguration();
     ToolkitNonStopConfiguration nonstopConfiguration = new ToolkitNonStopConfiguration(
-                                                                                       terracottaConfiguration
-                                                                                           .getNonstopConfiguration());
+            terracottaConfiguration
+                    .getNonstopConfiguration());
     toolkit.getFeature(ToolkitFeatureType.NONSTOP).getNonStopConfigurationRegistry()
-        .registerForInstance(nonstopConfiguration, fullyQualifiedCacheName, ToolkitObjectType.CACHE);
+            .registerForInstance(nonstopConfiguration, fullyQualifiedCacheName, ToolkitObjectType.CACHE);
   }
 
   @Override
   public void removeNonStopConfigforCache(Ehcache cache) {
     toolkit.getFeature(ToolkitFeatureType.NONSTOP).getNonStopConfigurationRegistry()
-        .deregisterForInstance(getFullyQualifiedCacheName(cache), ToolkitObjectType.CACHE);
+            .deregisterForInstance(getFullyQualifiedCacheName(cache), ToolkitObjectType.CACHE);
 
   }
 
@@ -582,9 +583,9 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
       logCacheManagerConfigInTerracottaClientLogs(cacheManagerName, configuration);
 
       ClusteredCacheManager clusteredCacheManager = clusteredEntityManager.getRootEntity(cacheManagerName,
-          ClusteredCacheManager.class);
+              ClusteredCacheManager.class);
       ToolkitReadWriteLock cmRWLock = clusteredEntityManager.getEntityLock(EhcacheEntitiesNaming
-          .getCacheManagerLockNameFor(cacheManagerName));
+              .getCacheManagerLockNameFor(cacheManagerName));
       ToolkitLock cmWriteLock = cmRWLock.writeLock();
       while (clusteredCacheManager == null) {
         if (cmWriteLock.tryLock()) {
@@ -603,11 +604,11 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   }
 
   private void logCacheManagerConfigInTerracottaClientLogs(String cacheManagerName, net.sf.ehcache.config.Configuration configuration) {
-    ToolkitLogger logger = ((ToolkitInternal)toolkit).getLogger(CONFIG_LOGGER_NAME);
+    ToolkitLogger logger = ((ToolkitInternal) toolkit).getLogger(CONFIG_LOGGER_NAME);
     if (logger.isInfoEnabled()) {
       try {
         logger.info("Configuration for clustered cache manager " + cacheManagerName + ":\n" +
-                    convertConfigurationToXMLString(configuration, cacheManagerName, false));
+                convertConfigurationToXMLString(configuration, cacheManagerName, false));
       } catch (Exception e) {
         logger.warn("Exception while trying to log configuration for clustered cache manager " + cacheManagerName, e);
       }
@@ -618,7 +619,7 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
     ClusteredCacheManager clusteredCacheManager;
     String xmlConfig = convertConfigurationToXMLString(configuration, cacheManagerName, true);
     clusteredCacheManager = new ToolkitBackedClusteredCacheManager(cacheManagerName,
-                                                                   new ClusteredCacheManagerConfiguration(xmlConfig));
+            new ClusteredCacheManagerConfiguration(xmlConfig));
     ClusteredCacheManager existing = clusteredEntityManager.addRootEntityIfAbsent(cacheManagerName, ClusteredCacheManager.class, clusteredCacheManager);
     if (existing != null) {
       clusteredCacheManager = existing;
@@ -662,11 +663,11 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   }
 
   private void logCacheConfigInTerracottaClientLogs(String cacheName, CacheConfiguration ehcacheConfig) {
-    ToolkitLogger logger = ((ToolkitInternal)toolkit).getLogger(CONFIG_LOGGER_NAME);
+    ToolkitLogger logger = ((ToolkitInternal) toolkit).getLogger(CONFIG_LOGGER_NAME);
     if (logger.isInfoEnabled()) {
       try {
         logger.info("Client configuration for clustered cache named " + cacheName + ":\n(clustered properties may differ in runtime cache depending on configuration used at creation time)\n" +
-                    convertCacheConfigurationToXMLString(ehcacheConfig));
+                convertCacheConfigurationToXMLString(ehcacheConfig));
       } catch (Exception e) {
         logger.warn("Exception while trying to log configuration for clustered cache " + cacheName, e);
       }
@@ -691,7 +692,7 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
 
   private String convertCacheConfigurationToXMLString(CacheConfiguration ehcacheConfig) {
     net.sf.ehcache.config.Configuration configuration = parseCacheManagerConfiguration(clusteredCacheManagerEntity.getConfiguration()
-        .getConfigurationAsText());
+            .getConfigurationAsText());
     return ConfigurationUtil.generateCacheConfigurationText(configuration, ehcacheConfig);
   }
 
@@ -707,7 +708,7 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
     String cacheManagerName = entityNames.cacheManagerName;
     synchronized (entityNames) {
       ClusteredCacheManager clusteredCacheManager = clusteredEntityManager.getRootEntity(cacheManagerName,
-                                                                                         ClusteredCacheManager.class);
+              ClusteredCacheManager.class);
       if (clusteredCacheManager == null) {
         LOGGER.error("Cache Manager {} has been destroyed by some other node - shutting down to prevent any further use of clustered features", cacheManagerName);
         shutdown();
@@ -802,12 +803,12 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
   private net.sf.ehcache.config.Configuration parseCacheManagerConfiguration(String xmlCacheManagerConfig) {
     net.sf.ehcache.config.Configuration targetConfiguration;
     targetConfiguration = ConfigurationFactory.parseConfiguration(new BufferedInputStream(new ByteArrayInputStream(xmlCacheManagerConfig
-        .getBytes())));
+            .getBytes())));
     return targetConfiguration;
   }
 
   private class EntityNamesHolder {
-    private String            cacheManagerName;
+    private String cacheManagerName;
     private final Set<String> cacheNames;
 
     private EntityNamesHolder() {
@@ -836,10 +837,12 @@ public class ToolkitInstanceFactoryImpl implements ToolkitInstanceFactory {
 
   private static class EhcacheTcConfig {
     private enum Type {
-      URL, EMBEDDED_TC_CONFIG, FILE
+      URL,
+      EMBEDDED_TC_CONFIG,
+      FILE
     }
 
-    private final Type   type;
+    private final Type type;
     private final String tcConfigUrlOrSnippet;
 
     private EhcacheTcConfig(Type type, String config) {

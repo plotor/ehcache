@@ -1,18 +1,19 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package net.sf.ehcache.transaction;
 
 import net.sf.ehcache.CacheException;
@@ -29,8 +30,8 @@ import net.sf.ehcache.store.Store;
 import net.sf.ehcache.store.StoreQuery;
 import net.sf.ehcache.store.TerracottaStore;
 import net.sf.ehcache.terracotta.TerracottaNotRunningException;
+import net.sf.ehcache.transaction.lock.SoftLockID;
 import net.sf.ehcache.writer.writebehind.WriteBehind;
-
 import org.terracotta.context.annotations.ContextChild;
 
 import java.io.IOException;
@@ -47,7 +48,8 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * The underlying store wrapped by this store
      */
-    @ContextChild protected final Store underlyingStore;
+    @ContextChild
+    protected final Store underlyingStore;
 
     /**
      * Constructor
@@ -70,6 +72,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getInMemorySize() {
         return underlyingStore.getInMemorySize();
     }
@@ -77,6 +80,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getOffHeapSize() {
         return underlyingStore.getOffHeapSize();
     }
@@ -84,6 +88,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getOnDiskSize() {
         return underlyingStore.getOnDiskSize();
     }
@@ -91,6 +96,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public long getInMemorySizeInBytes() {
         return underlyingStore.getInMemorySizeInBytes();
     }
@@ -98,6 +104,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public long getOffHeapSizeInBytes() {
         return underlyingStore.getOffHeapSizeInBytes();
     }
@@ -105,6 +112,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public long getOnDiskSizeInBytes() {
         return underlyingStore.getOnDiskSizeInBytes();
     }
@@ -112,6 +120,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsKeyOnDisk(Object key) {
         return underlyingStore.containsKeyOnDisk(key);
     }
@@ -119,6 +128,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsKeyOffHeap(Object key) {
         return underlyingStore.containsKeyOffHeap(key);
     }
@@ -126,6 +136,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsKeyInMemory(Object key) {
         return underlyingStore.containsKeyInMemory(key);
     }
@@ -133,6 +144,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void dispose() {
         underlyingStore.dispose();
     }
@@ -140,6 +152,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public Status getStatus() {
         return underlyingStore.getStatus();
     }
@@ -147,6 +160,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void expireElements() {
         underlyingStore.expireElements();
     }
@@ -154,6 +168,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void flush() throws IOException {
         underlyingStore.flush();
     }
@@ -161,6 +176,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean bufferFull() {
         return underlyingStore.bufferFull();
     }
@@ -168,6 +184,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public Policy getInMemoryEvictionPolicy() {
         return underlyingStore.getInMemoryEvictionPolicy();
     }
@@ -175,6 +192,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void setInMemoryEvictionPolicy(Policy policy) {
         underlyingStore.setInMemoryEvictionPolicy(policy);
     }
@@ -182,6 +200,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object getInternalContext() {
         return underlyingStore.getInternalContext();
     }
@@ -189,6 +208,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object getMBean() {
         return underlyingStore.getMBean();
     }
@@ -260,7 +280,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     public <T> Attribute<T> getSearchAttribute(String attributeName) throws CacheException {
         return underlyingStore.getSearchAttribute(attributeName);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -282,6 +302,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public Element unsafeGet(Object key) {
         if (underlyingStore instanceof TerracottaStore) {
             return ((TerracottaStore) underlyingStore).unsafeGet(key);
@@ -292,6 +313,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public Set getLocalKeys() {
         if (underlyingStore instanceof TerracottaStore) {
             return ((TerracottaStore) underlyingStore).getLocalKeys();
@@ -302,6 +324,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     /**
      * {@inheritDoc}
      */
+    @Override
     public CacheConfiguration.TransactionalMode getTransactionalMode() {
         if (underlyingStore instanceof TerracottaStore) {
             return ((TerracottaStore) underlyingStore).getTransactionalMode();
@@ -312,7 +335,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     @Override
     public WriteBehind createWriteBehind() {
         if (underlyingStore instanceof TerracottaStore) {
-            return ((TerracottaStore)underlyingStore).createWriteBehind();
+            return ((TerracottaStore) underlyingStore).createWriteBehind();
         }
         throw new CacheException("underlying store is not an instance of TerracottaStore");
     }
@@ -320,7 +343,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     @Override
     public void quickClear() {
         if (underlyingStore instanceof TerracottaStore) {
-            ((TerracottaStore)underlyingStore).quickClear();
+            ((TerracottaStore) underlyingStore).quickClear();
         }
         throw new CacheException("underlying store is not an instance of TerracottaStore");
     }
@@ -328,7 +351,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     @Override
     public int quickSize() {
         if (underlyingStore instanceof TerracottaStore) {
-            return ((TerracottaStore)underlyingStore).quickSize();
+            return ((TerracottaStore) underlyingStore).quickSize();
         }
         throw new CacheException("underlying store is not an instance of TerracottaStore");
     }
@@ -351,7 +374,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
 
         Object value = oldElement.getObjectValue();
         if (value instanceof SoftLockID) {
-            return ((SoftLockID)value).getOldElement();
+            return ((SoftLockID) value).getOldElement();
         } else {
             return oldElement;
         }
@@ -360,7 +383,7 @@ public abstract class AbstractTransactionStore extends AbstractStore implements 
     @Override
     public void notifyCacheEventListenersChanged() {
         if (underlyingStore instanceof TerracottaStore) {
-            ((TerracottaStore)underlyingStore).notifyCacheEventListenersChanged();
+            ((TerracottaStore) underlyingStore).notifyCacheEventListenersChanged();
         }
     }
 }

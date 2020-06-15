@@ -1,11 +1,11 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache.transaction.xa;
 
-import net.sf.ehcache.transaction.XidTransactionIDSerializedForm;
+import net.sf.ehcache.transaction.id.XidTransactionIDSerializedForm;
 import net.sf.ehcache.transaction.xa.XidTransactionID;
-
 import org.terracotta.modules.ehcache.transaction.ClusteredID;
 
 import javax.transaction.xa.Xid;
@@ -15,7 +15,7 @@ import javax.transaction.xa.Xid;
  */
 public class ClusteredXidTransactionID implements XidTransactionID, ClusteredID {
 
-  private final Xid    xid;
+  private final Xid xid;
   private final String ownerID;
   private final String cacheName;
   private final String cacheManagerName;

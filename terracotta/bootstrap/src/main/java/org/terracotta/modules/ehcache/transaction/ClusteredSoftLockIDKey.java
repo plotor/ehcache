@@ -1,10 +1,11 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache.transaction;
 
-import net.sf.ehcache.transaction.SoftLockID;
-import net.sf.ehcache.transaction.TransactionID;
+import net.sf.ehcache.transaction.id.TransactionID;
+import net.sf.ehcache.transaction.lock.SoftLockID;
 
 import java.io.Serializable;
 
@@ -13,9 +14,9 @@ import java.io.Serializable;
  */
 // Dont think We need this class .
 public class ClusteredSoftLockIDKey implements Serializable {
-  private static final int    PRIME = 31;
+  private static final int PRIME = 31;
   private final TransactionID transactionID;
-  private final Object        key;
+  private final Object key;
 
   public ClusteredSoftLockIDKey(SoftLockID softLockId) {
     this.transactionID = softLockId.getTransactionID();
@@ -43,9 +44,13 @@ public class ClusteredSoftLockIDKey implements Serializable {
     if (object instanceof ClusteredSoftLockIDKey) {
       ClusteredSoftLockIDKey other = (ClusteredSoftLockIDKey) object;
 
-      if (!transactionID.equals(other.transactionID)) { return false; }
+      if (!transactionID.equals(other.transactionID)) {
+        return false;
+      }
 
-      if (!key.equals(other.key)) { return false; }
+      if (!key.equals(other.key)) {
+        return false;
+      }
 
       return true;
     }
@@ -59,8 +64,5 @@ public class ClusteredSoftLockIDKey implements Serializable {
   public String toString() {
     return "Clustered Soft Lock ID [transactionID: " + transactionID + ", key: " + key + "]";
   }
-
-
-
 
 }

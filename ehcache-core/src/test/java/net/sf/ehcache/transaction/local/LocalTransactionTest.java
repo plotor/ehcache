@@ -1,5 +1,7 @@
 package net.sf.ehcache.transaction.local;
 
+import junit.framework.AssertionFailedError;
+import junit.framework.TestCase;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.CacheStoreHelper;
@@ -13,11 +15,11 @@ import net.sf.ehcache.store.Store;
 import net.sf.ehcache.store.TxCopyingCacheStore;
 import net.sf.ehcache.store.compound.ReadWriteSerializationCopyStrategy;
 import net.sf.ehcache.transaction.AbstractTransactionStore;
-import net.sf.ehcache.transaction.DeadLockException;
-import net.sf.ehcache.transaction.TransactionException;
-import net.sf.ehcache.transaction.TransactionInterruptedException;
-import net.sf.ehcache.transaction.TransactionTimeoutException;
 import net.sf.ehcache.transaction.TxStoreHelper;
+import net.sf.ehcache.transaction.error.DeadLockException;
+import net.sf.ehcache.transaction.error.TransactionException;
+import net.sf.ehcache.transaction.error.TransactionInterruptedException;
+import net.sf.ehcache.transaction.error.TransactionTimeoutException;
 
 import java.util.Arrays;
 import java.util.concurrent.CyclicBarrier;
@@ -26,9 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import junit.framework.AssertionFailedError;
-import junit.framework.TestCase;
 
 /**
  * @author lorban
@@ -67,7 +66,7 @@ public class LocalTransactionTest extends TestCase {
         cacheManager.shutdown();
     }
 
-  public void testTransactionContextLifeCycle() throws Exception {
+    public void testTransactionContextLifeCycle() throws Exception {
         assertNull(transactionController.getCurrentTransactionContext());
         transactionController.begin();
         try {
@@ -247,7 +246,7 @@ public class LocalTransactionTest extends TestCase {
 
     public void testCopyOnRead() throws Exception {
         transactionController.begin();
-        Object putValue = new Object[]{"one#1"};
+        Object putValue = new Object[] {"one#1"};
         cache1.put(new Element(1, putValue));
 
         Element one = cache1.get(1);
@@ -259,7 +258,7 @@ public class LocalTransactionTest extends TestCase {
 
     public void testCopyOnWrite() throws Exception {
         transactionController.begin();
-        Object[] putValue = new Object[]{"one#1"};
+        Object[] putValue = new Object[] {"one#1"};
         cache1.put(new Element(1, putValue));
         putValue[0] = "one#2";
 
@@ -270,13 +269,13 @@ public class LocalTransactionTest extends TestCase {
         transactionController.commit();
     }
 
-  public void testTwoPuts() throws Exception {
+    public void testTwoPuts() throws Exception {
         transactionController.begin();
-        cache1.put(new Element(1, new Object[]{"one#1"}));
+        cache1.put(new Element(1, new Object[] {"one#1"}));
         transactionController.commit();
 
         transactionController.begin();
-        cache1.put(new Element(1, new Object[]{"one#2"}));
+        cache1.put(new Element(1, new Object[] {"one#2"}));
         transactionController.commit();
     }
 
@@ -303,7 +302,6 @@ public class LocalTransactionTest extends TestCase {
 
         transactionController.commit();
     }
-
 
     public void testPut() throws Exception {
         transactionController.begin();
@@ -359,7 +357,6 @@ public class LocalTransactionTest extends TestCase {
         assertTrue(cache1.remove(1));
         assertNull(cache1.get(1));
         assertTrue(elementValueComparator.equals(new Element(2, "two"), cache1.get(2)));
-
 
         TxThread tx2 = new TxThread() {
             @Override
@@ -524,7 +521,6 @@ public class LocalTransactionTest extends TestCase {
         tx2.join();
         tx2.assertNotFailed();
 
-
         transactionController.begin();
         Element el1 = cache1.get(1);
         Element el2 = cache1.get(2);
@@ -564,7 +560,6 @@ public class LocalTransactionTest extends TestCase {
 
         transactionController.commit();
 
-
         transactionController.begin();
 
         cache1.put(new Element(1, "one"));
@@ -598,7 +593,6 @@ public class LocalTransactionTest extends TestCase {
         assertEquals(2, cache1.getSize());
 
         transactionController.commit();
-
 
         transactionController.begin();
 
@@ -703,7 +697,6 @@ public class LocalTransactionTest extends TestCase {
         transactionController.commit();
         tx2.join();
         tx2.assertNotFailed();
-
 
         transactionController.begin();
 
@@ -891,7 +884,7 @@ public class LocalTransactionTest extends TestCase {
         Cache txCache = cacheManager.getCache("txCacheMemoryOnly");
 
         CacheStoreHelper cacheStoreHelper = new CacheStoreHelper(txCache);
-        TxCopyingCacheStore store = (TxCopyingCacheStore)cacheStoreHelper.getStore();
+        TxCopyingCacheStore store = (TxCopyingCacheStore) cacheStoreHelper.getStore();
 
         transactionController.begin();
         txCache.removeAll();
@@ -915,8 +908,8 @@ public class LocalTransactionTest extends TestCase {
     public void testEvictedElementDoesNotGetCommitted() throws Exception {
         final Cache txCache = cacheManager.getCache("txCacheMemoryOnly");
         CacheStoreHelper cacheStoreHelper = new CacheStoreHelper(txCache);
-        TxCopyingCacheStore store = (TxCopyingCacheStore)cacheStoreHelper.getStore();
-        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore)store.getUnderlyingStore());
+        TxCopyingCacheStore store = (TxCopyingCacheStore) cacheStoreHelper.getStore();
+        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore) store.getUnderlyingStore());
 
         transactionController.begin();
         txCache.removeAll();
@@ -935,8 +928,8 @@ public class LocalTransactionTest extends TestCase {
     public void testEvictedAndReplacedElementDoesNotGetCommitted() throws Exception {
         final Cache txCache = cacheManager.getCache("txCacheMemoryOnly");
         CacheStoreHelper cacheStoreHelper = new CacheStoreHelper(txCache);
-        TxCopyingCacheStore store = (TxCopyingCacheStore)cacheStoreHelper.getStore();
-        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore)store.getUnderlyingStore());
+        TxCopyingCacheStore store = (TxCopyingCacheStore) cacheStoreHelper.getStore();
+        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore) store.getUnderlyingStore());
 
         transactionController.begin();
         txCache.removeAll();
@@ -947,7 +940,7 @@ public class LocalTransactionTest extends TestCase {
 
         // emulate eviction and commit of another TX
         underlyingStore.put(new ReadWriteSerializationCopyStrategy()
-            .copyForWrite(new Element(1, "one#replaced"), getClass().getClassLoader()));
+                .copyForWrite(new Element(1, "one#replaced"), getClass().getClassLoader()));
 
         transactionController.commit();
 
@@ -960,9 +953,8 @@ public class LocalTransactionTest extends TestCase {
         final Cache txCache = cacheManager.getCache("txCacheMemoryOnly");
 
         CacheStoreHelper cacheStoreHelper = new CacheStoreHelper(txCache);
-        TxCopyingCacheStore store = (TxCopyingCacheStore)cacheStoreHelper.getStore();
-        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore)store.getUnderlyingStore());
-
+        TxCopyingCacheStore store = (TxCopyingCacheStore) cacheStoreHelper.getStore();
+        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore) store.getUnderlyingStore());
 
         transactionController.begin();
         txCache.removeAll();
@@ -1001,9 +993,8 @@ public class LocalTransactionTest extends TestCase {
         final Cache txCache = cacheManager.getCache("txCacheMemoryOnly");
 
         CacheStoreHelper cacheStoreHelper = new CacheStoreHelper(txCache);
-        TxCopyingCacheStore store = (TxCopyingCacheStore)cacheStoreHelper.getStore();
-        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore)store.getUnderlyingStore());
-
+        TxCopyingCacheStore store = (TxCopyingCacheStore) cacheStoreHelper.getStore();
+        Store underlyingStore = TxStoreHelper.getUnderlyingStore((AbstractTransactionStore) store.getUnderlyingStore());
 
         transactionController.begin();
         txCache.removeAll();

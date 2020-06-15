@@ -16,10 +16,10 @@
 
 package net.sf.ehcache;
 
-import net.sf.ehcache.transaction.TransactionException;
-import net.sf.ehcache.transaction.TransactionID;
-import net.sf.ehcache.transaction.TransactionIDFactory;
-import net.sf.ehcache.transaction.TransactionTimeoutException;
+import net.sf.ehcache.transaction.error.TransactionException;
+import net.sf.ehcache.transaction.error.TransactionTimeoutException;
+import net.sf.ehcache.transaction.id.TransactionID;
+import net.sf.ehcache.transaction.id.TransactionIDFactory;
 import net.sf.ehcache.transaction.local.LocalRecoveryManager;
 import net.sf.ehcache.transaction.local.LocalTransactionContext;
 import net.sf.ehcache.util.lang.VicariousThreadLocal;

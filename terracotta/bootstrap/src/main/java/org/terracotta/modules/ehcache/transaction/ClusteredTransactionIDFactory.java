@@ -1,18 +1,18 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache.transaction;
 
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.cluster.CacheCluster;
 import net.sf.ehcache.cluster.ClusterNode;
-import net.sf.ehcache.transaction.AbstractTransactionIDFactory;
-import net.sf.ehcache.transaction.Decision;
-import net.sf.ehcache.transaction.TransactionID;
-import net.sf.ehcache.transaction.TransactionIDSerializedForm;
-import net.sf.ehcache.transaction.XidTransactionIDSerializedForm;
+import net.sf.ehcache.transaction.id.AbstractTransactionIDFactory;
+import net.sf.ehcache.transaction.id.Decision;
+import net.sf.ehcache.transaction.id.TransactionID;
+import net.sf.ehcache.transaction.id.TransactionIDSerializedForm;
+import net.sf.ehcache.transaction.id.XidTransactionIDSerializedForm;
 import net.sf.ehcache.transaction.xa.XidTransactionID;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.modules.ehcache.ToolkitInstanceFactory;
@@ -20,7 +20,6 @@ import org.terracotta.modules.ehcache.collections.SerializedToolkitCache;
 import org.terracotta.modules.ehcache.transaction.xa.ClusteredXidTransactionID;
 
 import java.util.concurrent.ConcurrentMap;
-
 import javax.transaction.xa.Xid;
 
 /**
@@ -28,15 +27,15 @@ import javax.transaction.xa.Xid;
  */
 public class ClusteredTransactionIDFactory extends AbstractTransactionIDFactory {
 
-  private static final Logger                                   LOG = LoggerFactory
-                                                                        .getLogger(ClusteredTransactionIDFactory.class
-                                                                            .getName());
+  private static final Logger LOG = LoggerFactory
+          .getLogger(ClusteredTransactionIDFactory.class
+                  .getName());
 
-  private final String                                          clusterUUID;
-  private final String                                          cacheManagerName;
+  private final String clusterUUID;
+  private final String cacheManagerName;
 
   private final SerializedToolkitCache<TransactionID, Decision> transactionStates;
-  private final CacheCluster                                    clusterTopology;
+  private final CacheCluster clusterTopology;
 
   public ClusteredTransactionIDFactory(String clusterUUID, String cacheManagerName,
                                        ToolkitInstanceFactory toolkitInstanceFactory, CacheCluster topology) {
@@ -50,7 +49,7 @@ public class ClusteredTransactionIDFactory extends AbstractTransactionIDFactory 
   @Override
   public TransactionID createTransactionID() {
     TransactionID id = new ClusteredTransactionID(clusterTopology.getCurrentNode().getId(), clusterUUID,
-                                                  cacheManagerName);
+            cacheManagerName);
     getTransactionStates().putIfAbsent(id, Decision.IN_DOUBT);
     return id;
   }
@@ -60,7 +59,9 @@ public class ClusteredTransactionIDFactory extends AbstractTransactionIDFactory 
     if (id instanceof ClusteredID) {
       String ownerClientId = ((ClusteredID) id).getOwnerID();
       for (ClusterNode node : clusterTopology.getNodes()) {
-        if (node.getId().equals(ownerClientId)) { return false; }
+        if (node.getId().equals(ownerClientId)) {
+          return false;
+        }
       }
       return true;
     } else {
@@ -76,7 +77,7 @@ public class ClusteredTransactionIDFactory extends AbstractTransactionIDFactory 
   @Override
   public XidTransactionID createXidTransactionID(Xid xid, Ehcache cache) {
     XidTransactionID id = new ClusteredXidTransactionID(xid, cacheManagerName, cache.getName(), clusterTopology
-        .getCurrentNode().getId());
+            .getCurrentNode().getId());
     getTransactionStates().putIfAbsent(id, Decision.IN_DOUBT);
     return id;
   }

@@ -1,8 +1,10 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache.store;
 
+import com.terracotta.entity.ehcache.EhcacheEntitiesNaming;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.cluster.CacheCluster;
 import net.sf.ehcache.config.CacheWriterConfiguration;
@@ -13,11 +15,10 @@ import net.sf.ehcache.management.event.ManagementEventSink;
 import net.sf.ehcache.store.Store;
 import net.sf.ehcache.store.TerracottaStore;
 import net.sf.ehcache.terracotta.ClusteredInstanceFactory;
-import net.sf.ehcache.transaction.SoftLockManager;
-import net.sf.ehcache.transaction.TransactionIDFactory;
+import net.sf.ehcache.transaction.id.TransactionIDFactory;
+import net.sf.ehcache.transaction.lock.SoftLockManager;
 import net.sf.ehcache.util.ProductInfo;
 import net.sf.ehcache.writer.writebehind.WriteBehind;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.modules.ehcache.ToolkitInstanceFactory;
@@ -41,24 +42,22 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.feature.ManagementInternalFeature;
 import org.terracotta.toolkit.internal.feature.NonStopInternalFeature;
 
-import com.terracotta.entity.ehcache.EhcacheEntitiesNaming;
-
 import java.util.concurrent.Callable;
 
 public class TerracottaClusteredInstanceFactory implements ClusteredInstanceFactory {
 
-  public static final Logger                    LOGGER                     = LoggerFactory
-                                                                               .getLogger(TerracottaClusteredInstanceFactory.class);
-  public static final String                    DEFAULT_CACHE_MANAGER_NAME = "__DEFAULT__";
+  public static final Logger LOGGER = LoggerFactory
+          .getLogger(TerracottaClusteredInstanceFactory.class);
+  public static final String DEFAULT_CACHE_MANAGER_NAME = "__DEFAULT__";
 
-  protected final ToolkitInstanceFactory        toolkitInstanceFactory;
+  protected final ToolkitInstanceFactory toolkitInstanceFactory;
 
   // private final fields
-  protected final CacheCluster                  topology;
+  protected final CacheCluster topology;
   private final ClusteredEventReplicatorFactory clusteredEventReplicatorFactory;
-  private final SoftLockManagerProvider         softLockManagerProvider;
-  private final AsyncCoordinatorFactory         asyncCoordinatorFactory;
-  private final TerracottaStoreInitializationService      initializationService;
+  private final SoftLockManagerProvider softLockManagerProvider;
+  private final AsyncCoordinatorFactory asyncCoordinatorFactory;
+  private final TerracottaStoreInitializationService initializationService;
 
   public TerracottaClusteredInstanceFactory(TerracottaClientConfiguration terracottaClientConfiguration,
                                             ClassLoader loader) {
@@ -108,7 +107,7 @@ public class TerracottaClusteredInstanceFactory implements ClusteredInstanceFact
 
   @Override
   public final TerracottaStore createNonStopStore(Callable<TerracottaStore> store,
- Ehcache cache) {
+                                                  Ehcache cache) {
     return new NonStopStoreWrapper(store, toolkitInstanceFactory, cache, initializationService);
   }
 
@@ -121,14 +120,14 @@ public class TerracottaClusteredInstanceFactory implements ClusteredInstanceFact
   public WriteBehind createWriteBehind(Ehcache cache) {
     final CacheWriterConfiguration config = cache.getCacheConfiguration().getCacheWriterConfiguration();
     final AsyncConfig asyncConfig = new WriteBehindAsyncConfig(config.getMinWriteDelay() * 1000,
-                                                               config.getMaxWriteDelay() * 1000,
-                                                               config.getWriteBatching(), config.getWriteBatchSize(),
-                                                               cache.getCacheConfiguration()
-                                                                   .getTerracottaConfiguration().isSynchronousWrites(),
-                                                               config.getRetryAttempts(),
-                                                               config.getRetryAttemptDelaySeconds() * 1000,
-                                                               config.getRateLimitPerSecond(),
-                                                               config.getWriteBehindMaxQueueSize());
+            config.getMaxWriteDelay() * 1000,
+            config.getWriteBatching(), config.getWriteBatchSize(),
+            cache.getCacheConfiguration()
+                    .getTerracottaConfiguration().isSynchronousWrites(),
+            config.getRetryAttempts(),
+            config.getRetryAttemptDelaySeconds() * 1000,
+            config.getRateLimitPerSecond(),
+            config.getWriteBehindMaxQueueSize());
 
     final AsyncCoordinator asyncCoordinator = asyncCoordinatorFactory.getOrCreateAsyncCoordinator(cache, asyncConfig);
     return new AsyncWriteBehind(asyncCoordinator, config.getWriteBehindConcurrency());
@@ -150,7 +149,7 @@ public class TerracottaClusteredInstanceFactory implements ClusteredInstanceFact
 
   @Override
   public void enableNonStopForCurrentThread(boolean enable) {
-    NonStopInternalFeature nonStopInternalFeature = ((ToolkitInternal)toolkitInstanceFactory.getToolkit()).getFeature(ToolkitFeatureTypeInternal.NONSTOP);
+    NonStopInternalFeature nonStopInternalFeature = ((ToolkitInternal) toolkitInstanceFactory.getToolkit()).getFeature(ToolkitFeatureTypeInternal.NONSTOP);
     if (nonStopInternalFeature != null) {
       nonStopInternalFeature.enableForCurrentThread(enable);
     }
@@ -192,7 +191,7 @@ public class TerracottaClusteredInstanceFactory implements ClusteredInstanceFact
   @Override
   public ManagementEventSink createEventSink() {
     Toolkit toolkit = toolkitInstanceFactory.getToolkit();
-    ToolkitInternal toolkitInternal = (ToolkitInternal)toolkit;
+    ToolkitInternal toolkitInternal = (ToolkitInternal) toolkit;
     ManagementInternalFeature feature = toolkitInternal.getFeature(ToolkitFeatureTypeInternal.MANAGEMENT);
     return new ClusteredManagementEventSink(feature);
   }

@@ -1,14 +1,15 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache;
 
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.search.attribute.AttributeExtractor;
-import net.sf.ehcache.transaction.Decision;
-import net.sf.ehcache.transaction.TransactionID;
+import net.sf.ehcache.transaction.id.Decision;
+import net.sf.ehcache.transaction.id.TransactionID;
 import org.terracotta.modules.ehcache.async.AsyncConfig;
 import org.terracotta.modules.ehcache.collections.SerializedToolkitCache;
 import org.terracotta.modules.ehcache.event.CacheDisposalNotification;
@@ -69,17 +70,17 @@ public interface ToolkitInstanceFactory {
 
   /**
    * Returns a {@link ToolkitMap} for storing serialized extractors for the cache
-   * 
-   * @throws UnsupportedOperationException if search is not supported
+   *
    * @param cacheManagerName
    * @param cacheName
+   * @throws UnsupportedOperationException if search is not supported
    */
   ToolkitMap<String, AttributeExtractor> getOrCreateExtractorsMap(final String cacheManagerName, String cacheName);
 
   /**
    * Returns a {@link ToolkitMap} that will be used internally by Toolkit to store attribute schema.
-   * @param cacheName
    *
+   * @param cacheName
    */
   ToolkitMap<String, String> getOrCreateAttributeMap(final String cacheManagerName, String cacheName);
 
@@ -105,7 +106,7 @@ public interface ToolkitInstanceFactory {
                                                                                                                      String cacheName);
 
   ToolkitMap<SerializedReadCommittedClusteredSoftLock, Integer> getOrCreateNewSoftLocksSet(String cacheManagerName,
-                                                                                  String cacheName);
+                                                                                           String cacheName);
 
   ToolkitMap<String, Serializable> getOrCreateClusteredStoreConfigMap(String cacheManagerName, String cacheName);
 

@@ -18,7 +18,7 @@ package net.sf.ehcache.transaction.xa.commands;
 
 import net.sf.ehcache.store.ElementValueComparator;
 import net.sf.ehcache.store.Store;
-import net.sf.ehcache.transaction.SoftLockManager;
+import net.sf.ehcache.transaction.lock.SoftLockManager;
 import net.sf.ehcache.transaction.xa.XidTransactionID;
 
 /**

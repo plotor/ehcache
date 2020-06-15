@@ -21,15 +21,20 @@ import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.store.ElementValueComparator;
 import net.sf.ehcache.store.Store;
-import net.sf.ehcache.transaction.SoftLock;
-import net.sf.ehcache.transaction.SoftLockID;
-import net.sf.ehcache.transaction.SoftLockManager;
-import net.sf.ehcache.transaction.TransactionIDFactory;
-import net.sf.ehcache.transaction.TransactionIDNotFoundException;
+import net.sf.ehcache.transaction.error.TransactionIDNotFoundException;
+import net.sf.ehcache.transaction.id.TransactionIDFactory;
+import net.sf.ehcache.transaction.lock.SoftLock;
+import net.sf.ehcache.transaction.lock.SoftLockID;
+import net.sf.ehcache.transaction.lock.SoftLockManager;
 import net.sf.ehcache.transaction.manager.TransactionManagerLookup;
 import net.sf.ehcache.transaction.xa.commands.Command;
+import net.sf.ehcache.transaction.xa.error.EhcacheXAException;
+import net.sf.ehcache.transaction.xa.error.OptimisticLockFailureException;
 import net.sf.ehcache.transaction.xa.processor.XARequest;
 import net.sf.ehcache.transaction.xa.processor.XARequestProcessor;
+import net.sf.ehcache.transaction.xa.statistics.XaCommitOutcome;
+import net.sf.ehcache.transaction.xa.statistics.XaRecoveryOutcome;
+import net.sf.ehcache.transaction.xa.statistics.XaRollbackOutcome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.statistics.observer.OperationObserver;
@@ -588,7 +593,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
 
         return ctx;
     }
-    
+
     @Override
     public XATransactionContext getCurrentTransactionContext() {
         if (currentXid == null) {

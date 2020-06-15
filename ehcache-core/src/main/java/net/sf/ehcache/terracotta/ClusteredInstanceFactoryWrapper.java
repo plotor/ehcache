@@ -1,17 +1,17 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package net.sf.ehcache.terracotta;
@@ -23,8 +23,8 @@ import net.sf.ehcache.event.CacheEventListener;
 import net.sf.ehcache.management.event.ManagementEventSink;
 import net.sf.ehcache.store.Store;
 import net.sf.ehcache.store.TerracottaStore;
-import net.sf.ehcache.transaction.SoftLockManager;
-import net.sf.ehcache.transaction.TransactionIDFactory;
+import net.sf.ehcache.transaction.id.TransactionIDFactory;
+import net.sf.ehcache.transaction.lock.SoftLockManager;
 import net.sf.ehcache.writer.writebehind.WriteBehind;
 
 import java.util.concurrent.Callable;
@@ -37,7 +37,6 @@ import java.util.concurrent.Callable;
  * </ul>
  *
  * @author Abhishek Sanoujam
- *
  */
 public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory {
 
@@ -68,6 +67,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public CacheCluster getTopology() {
         return client.getCacheCluster();
     }
@@ -77,6 +77,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public String getUUID() {
         return delegate.getUUID();
     }
@@ -92,6 +93,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public CacheEventListener createEventReplicator(Ehcache cache) {
         return delegate.createEventReplicator(cache);
     }
@@ -99,6 +101,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public Store createStore(Ehcache cache) {
         return delegate.createStore(cache);
     }
@@ -106,6 +109,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public TransactionIDFactory createTransactionIDFactory(String uuid, String cacheManagerName) {
         return delegate.createTransactionIDFactory(uuid, cacheManagerName);
     }
@@ -113,6 +117,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public WriteBehind createWriteBehind(Ehcache cache) {
         return delegate.createWriteBehind(cache);
     }
@@ -120,6 +125,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public SoftLockManager getOrCreateSoftLockManager(Ehcache cache) {
         return delegate.getOrCreateSoftLockManager(cache);
     }
@@ -127,13 +133,14 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public void shutdown() {
         delegate.shutdown();
     }
 
     @Override
     public TerracottaStore createNonStopStore(Callable<TerracottaStore> store, Ehcache cache) {
-       return delegate.createNonStopStore(store, cache);
+        return delegate.createNonStopStore(store, cache);
     }
 
     @Override
@@ -159,6 +166,7 @@ public class ClusteredInstanceFactoryWrapper implements ClusteredInstanceFactory
     /**
      * {@inheritDoc}
      */
+    @Override
     public void waitForOrchestrator(String cacheManagerName) {
         delegate.waitForOrchestrator(cacheManagerName);
     }

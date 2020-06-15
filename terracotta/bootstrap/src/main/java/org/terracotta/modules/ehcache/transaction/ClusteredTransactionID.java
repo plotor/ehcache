@@ -1,10 +1,11 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package org.terracotta.modules.ehcache.transaction;
 
-import net.sf.ehcache.transaction.TransactionID;
-import net.sf.ehcache.transaction.TransactionIDSerializedForm;
+import net.sf.ehcache.transaction.id.TransactionID;
+import net.sf.ehcache.transaction.id.TransactionIDSerializedForm;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,11 +16,11 @@ public class ClusteredTransactionID implements TransactionID, ClusteredID {
 
   private static final AtomicInteger idGenerator = new AtomicInteger();
 
-  private final String               clusterUUID;
-  private final String               ownerID;
-  private final String               cacheManagerName;
-  private final long                 creationTime;
-  private final int                  id;
+  private final String clusterUUID;
+  private final String ownerID;
+  private final String cacheManagerName;
+  private final long creationTime;
+  private final int id;
 
   public ClusteredTransactionID(String ownerId, String clusterUUID, String cacheManagerName) {
     this(ownerId, clusterUUID, cacheManagerName, System.currentTimeMillis(), idGenerator.getAndIncrement());

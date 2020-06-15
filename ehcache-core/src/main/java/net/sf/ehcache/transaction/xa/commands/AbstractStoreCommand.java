@@ -19,11 +19,11 @@ package net.sf.ehcache.transaction.xa.commands;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.store.ElementValueComparator;
 import net.sf.ehcache.store.Store;
-import net.sf.ehcache.transaction.SoftLock;
-import net.sf.ehcache.transaction.SoftLockID;
-import net.sf.ehcache.transaction.SoftLockManager;
-import net.sf.ehcache.transaction.xa.OptimisticLockFailureException;
+import net.sf.ehcache.transaction.lock.SoftLock;
+import net.sf.ehcache.transaction.lock.SoftLockID;
+import net.sf.ehcache.transaction.lock.SoftLockManager;
 import net.sf.ehcache.transaction.xa.XidTransactionID;
+import net.sf.ehcache.transaction.xa.error.OptimisticLockFailureException;
 
 /**
  * @author Ludovic Orban

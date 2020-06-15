@@ -1,17 +1,17 @@
 /**
- *  Copyright Terracotta, Inc.
+ * Copyright Terracotta, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package net.sf.ehcache.store;
@@ -30,6 +30,7 @@ import net.sf.ehcache.search.attribute.AttributeExtractor;
 import net.sf.ehcache.search.attribute.AttributeExtractorException;
 import net.sf.ehcache.search.attribute.AttributeType;
 import net.sf.ehcache.search.attribute.DynamicAttributesExtractor;
+import static net.sf.ehcache.search.expression.BaseCriteria.getExtractor;
 import net.sf.ehcache.search.expression.Criteria;
 import net.sf.ehcache.search.impl.AggregateOnlyResult;
 import net.sf.ehcache.search.impl.BaseResult;
@@ -39,7 +40,7 @@ import net.sf.ehcache.search.impl.OrderComparator;
 import net.sf.ehcache.search.impl.ResultImpl;
 import net.sf.ehcache.search.impl.ResultsImpl;
 import net.sf.ehcache.search.impl.SearchManager;
-import net.sf.ehcache.transaction.SoftLockID;
+import net.sf.ehcache.transaction.lock.SoftLockID;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,8 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-
-import static net.sf.ehcache.search.expression.BaseCriteria.getExtractor;
 
 /**
  * Brute force search implementation
@@ -70,10 +69,10 @@ public class BruteForceSearchManager implements SearchManager {
     private final Ehcache cache;
     private BruteForceSource bruteForceSource;
 
-
     /**
      * Create a BruteForceSearchManager
-     * @param cache 
+     *
+     * @param cache
      */
     public BruteForceSearchManager(Ehcache cache) {
         this.cache = cache;
@@ -86,7 +85,7 @@ public class BruteForceSearchManager implements SearchManager {
         private final BaseResult result;
         private final List<Object> aggregatorInputs;
         private final OrderComparator<BaseResult> comp;
-        
+
         private ResultHolder(BaseResult res, List<Object> values, OrderComparator<BaseResult> cmp) {
             result = res;
             aggregatorInputs = values;
@@ -98,7 +97,7 @@ public class BruteForceSearchManager implements SearchManager {
             return comp.compare(this.result, other.result);
         }
     }
-    
+
     @Override
     public Results executeQuery(StoreQuery query, Map<String, AttributeExtractor> extractors, DynamicAttributesExtractor
             dynIndexer) {
@@ -136,25 +135,25 @@ public class BruteForceSearchManager implements SearchManager {
 
         boolean anyMatches = !matches.isEmpty();
         OrderComparator<BaseResult> comp = new OrderComparator<BaseResult>(query.getOrdering());
-        
+
         for (Element element : matches) {
             Map<String, AttributeExtractor> extractorSuperset = eltExtractors.get(element.getObjectKey());
 
             List<Object> resultAggs = new ArrayList<Object>(aggregators.size());
-            for (AggregatorInstance<?> agg: aggregators) {
+            for (AggregatorInstance<?> agg : aggregators) {
                 Attribute aggrAttr = agg.getAttribute();
                 // placeholder input for count
-                Object val = aggrAttr != null ? 
-                    getExtractor(aggrAttr.getAttributeName(), extractorSuperset).attributeFor(element, aggrAttr.getAttributeName()) : null;
+                Object val = aggrAttr != null ?
+                        getExtractor(aggrAttr.getAttributeName(), extractorSuperset).attributeFor(element, aggrAttr.getAttributeName()) : null;
                 resultAggs.add(val);
             }
-            
+
             Map<String, Object> attributes = getAttributeValues(query.requestedAttributes(), extractorSuperset, element);
             Object[] sortAttributes = getSortAttributes(query, extractorSuperset, element);
 
             if (!isGroupBy) {
-                results.add(new ResultHolder(new ResultImpl(element.getObjectKey(), element.getObjectValue(), query, attributes, sortAttributes), 
-                            resultAggs, comp));
+                results.add(new ResultHolder(new ResultImpl(element.getObjectKey(), element.getObjectValue(), query, attributes, sortAttributes),
+                        resultAggs, comp));
             } else {
                 Map<String, Object> groupByValues = getAttributeValues(groupByAttributes, extractorSuperset, element);
                 Set<?> groupId = new HashSet<Object>(groupByValues.values());
@@ -167,7 +166,7 @@ public class BruteForceSearchManager implements SearchManager {
                     groupByAggregators.put(groupId, groupAggrs);
                 }
                 int i = 0;
-                for (AggregatorInstance<?> inst: groupAggrs) {
+                for (AggregatorInstance<?> inst : groupAggrs) {
                     inst.accept(resultAggs.get(i++));
                 }
                 ResultHolder group = groupByResults.get(groupId);
@@ -185,39 +184,39 @@ public class BruteForceSearchManager implements SearchManager {
             }
 
             if (hasOrder) {
-                Collections.sort((List<ResultHolder>)results);
+                Collections.sort((List<ResultHolder>) results);
             }
             // trim results to max length if necessary
             int max = query.maxResults();
             if (max >= 0 && (results.size() > max)) {
-                results = ((List<ResultHolder>)results).subList(0, max);
+                results = ((List<ResultHolder>) results).subList(0, max);
             }
         }
 
         if (!aggregators.isEmpty()) {
             for (ResultHolder rh : results) {
                 if (isGroupBy) {
-                    GroupedResultImpl group = (GroupedResultImpl)rh.result;
+                    GroupedResultImpl group = (GroupedResultImpl) rh.result;
                     Set<?> groupId = new HashSet<Object>(group.getGroupByValues().values());
                     aggregators = groupByAggregators.get(groupId);
                     setResultAggregators(aggregators, group);
                 } else {
                     int i = 0;
-                    for (Object val: rh.aggregatorInputs) {
+                    for (Object val : rh.aggregatorInputs) {
                         aggregators.get(i++).accept(val);
                     }
                 }
             }
             if (includeResults && !isGroupBy) {
                 // Set the same aggregate values for each result
-                for (ResultHolder rh: results) {
+                for (ResultHolder rh : results) {
                     setResultAggregators(aggregators, rh.result);
                 }
             }
         }
-        
+
         List<BaseResult> output;
-        
+
         if (!isGroupBy && anyMatches && !includeResults && !aggregators.isEmpty()) {
             // add one row in the results if the only thing included was aggregators and anything matched
             BaseResult aggOnly = new AggregateOnlyResult(query);
@@ -225,7 +224,7 @@ public class BruteForceSearchManager implements SearchManager {
             output = Collections.singletonList(aggOnly);
         } else {
             output = new ArrayList<BaseResult>(results.size());
-            for (ResultHolder rh: results) {
+            for (ResultHolder rh : results) {
                 output.add(rh.result);
             }
         }
@@ -234,8 +233,7 @@ public class BruteForceSearchManager implements SearchManager {
                 && !aggregators.isEmpty());
     }
 
-    private void setResultAggregators(List<AggregatorInstance<?>> aggregators, BaseResult result)
-    {
+    private void setResultAggregators(List<AggregatorInstance<?>> aggregators, BaseResult result) {
         List<Object> aggregateResults = new ArrayList<Object>();
         for (AggregatorInstance<?> aggregator : aggregators) {
             aggregateResults.add(aggregator.aggregateResult());
@@ -269,7 +267,7 @@ public class BruteForceSearchManager implements SearchManager {
             Map<String, ?> dynamic = DynamicSearchChecker.getSearchAttributes(element, configExtractors.keySet(),
                     dynIndexer);
 
-            for (final Map.Entry<String, ?> entry: dynamic.entrySet()) {
+            for (final Map.Entry<String, ?> entry : dynamic.entrySet()) {
                 AttributeExtractor old = combinedExtractors.put(entry.getKey(), new AttributeExtractor() {
                     @Override
                     public Object attributeFor(Element element, String attributeName) throws AttributeExtractorException {
@@ -312,59 +310,66 @@ public class BruteForceSearchManager implements SearchManager {
 
     @Override
     public void put(String cacheName, int segmentId, Element element, byte[] key, Map<String, AttributeExtractor> extractors,
-            DynamicAttributesExtractor dynamicIndexer) {
+                    DynamicAttributesExtractor dynamicIndexer) {
         if (extractors.isEmpty() && dynamicIndexer == null) {
             return;
         }
 
-      boolean isXa = element.getObjectValue() instanceof SoftLockID;
+        boolean isXa = element.getObjectValue() instanceof SoftLockID;
 
-      if (isXa) {
-        SoftLockID sl = (SoftLockID) element.getObjectValue();
-        element = sl.getOldElement();
+        if (isXa) {
+            SoftLockID sl = (SoftLockID) element.getObjectValue();
+            element = sl.getOldElement();
 
-        // No previous value committed - do not index
-        if (element == null) { return; }
-      }
-      element = bruteForceSource.transformForIndexing(element);
-
-      // Handle dynamic attribute extractor, if any
-      Map<String, ?> dynAttrs = DynamicSearchChecker.getSearchAttributes(element, extractors.keySet(),
-                                                                   dynamicIndexer);
-      Set<Attribute<?>> attrs = new HashSet<Attribute<?>>(dynAttrs.size());
-      for (Map.Entry<String, ?> attr : dynAttrs.entrySet()) {
-          if (!AttributeType.isSupportedType(attr.getValue())) {
-              throw new CacheException(String.format("Unsupported attribute type specified %s for dynamically extracted attribute %s",
-                      attr.getClass().getName(), attr.getKey()));
-          }
-          attrs.add(new Attribute(attr.getKey()));
-      }
-
-      Searchable config = bruteForceSource.getSearchable();
-      if (config == null) { return; }
-      for (Map.Entry<String, AttributeExtractor> entry : extractors.entrySet()) {
-        String name = entry.getKey();
-        SearchAttribute sa = config.getSearchAttributes().get(name);
-        Class<?> c = ConfigurationHelper.getSearchAttributeType(sa, cache.getCacheConfiguration().getClassLoader());
-        if (c == null) { continue; }
-
-        AttributeExtractor extractor = entry.getValue();
-        Object av = extractor.attributeFor(element, name);
-
-        AttributeType schemaType = AttributeType.typeFor(c);
-        AttributeType type = AttributeType.typeFor(name, av);
-
-        String schemaTypeName = c.isEnum() ? c.getName() : schemaType.name();
-        String typeName = AttributeType.ENUM == type ? ((Enum) av).getDeclaringClass().getName() : type.name();
-
-        if (!typeName.equals(schemaTypeName)) { throw new SearchException(
-                                                                    String
-                                                                        .format("Expecting a %s value for attribute [%s] but was %s",
-                                                                                schemaTypeName, name, typeName));
+            // No previous value committed - do not index
+            if (element == null) {
+                return;
+            }
         }
-      }
+        element = bruteForceSource.transformForIndexing(element);
 
-      searchAttributes.addAll(attrs);
+        // Handle dynamic attribute extractor, if any
+        Map<String, ?> dynAttrs = DynamicSearchChecker.getSearchAttributes(element, extractors.keySet(),
+                dynamicIndexer);
+        Set<Attribute<?>> attrs = new HashSet<Attribute<?>>(dynAttrs.size());
+        for (Map.Entry<String, ?> attr : dynAttrs.entrySet()) {
+            if (!AttributeType.isSupportedType(attr.getValue())) {
+                throw new CacheException(String.format("Unsupported attribute type specified %s for dynamically extracted attribute %s",
+                        attr.getClass().getName(), attr.getKey()));
+            }
+            attrs.add(new Attribute(attr.getKey()));
+        }
+
+        Searchable config = bruteForceSource.getSearchable();
+        if (config == null) {
+            return;
+        }
+        for (Map.Entry<String, AttributeExtractor> entry : extractors.entrySet()) {
+            String name = entry.getKey();
+            SearchAttribute sa = config.getSearchAttributes().get(name);
+            Class<?> c = ConfigurationHelper.getSearchAttributeType(sa, cache.getCacheConfiguration().getClassLoader());
+            if (c == null) {
+                continue;
+            }
+
+            AttributeExtractor extractor = entry.getValue();
+            Object av = extractor.attributeFor(element, name);
+
+            AttributeType schemaType = AttributeType.typeFor(c);
+            AttributeType type = AttributeType.typeFor(name, av);
+
+            String schemaTypeName = c.isEnum() ? c.getName() : schemaType.name();
+            String typeName = AttributeType.ENUM == type ? ((Enum) av).getDeclaringClass().getName() : type.name();
+
+            if (!typeName.equals(schemaTypeName)) {
+                throw new SearchException(
+                        String
+                                .format("Expecting a %s value for attribute [%s] but was %s",
+                                        schemaTypeName, name, typeName));
+            }
+        }
+
+        searchAttributes.addAll(attrs);
     }
 
     @Override

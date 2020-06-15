@@ -11,7 +11,7 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.store.TxCopyingCacheStore;
-import net.sf.ehcache.transaction.TransactionTimeoutException;
+import net.sf.ehcache.transaction.error.TransactionTimeoutException;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

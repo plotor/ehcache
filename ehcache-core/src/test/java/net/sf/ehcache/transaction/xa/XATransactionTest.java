@@ -14,7 +14,7 @@ import net.sf.ehcache.CacheStoreHelper;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.store.TxCopyingCacheStore;
-import net.sf.ehcache.transaction.TransactionTimeoutException;
+import net.sf.ehcache.transaction.error.TransactionTimeoutException;
 import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
