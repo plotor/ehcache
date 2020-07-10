@@ -70,7 +70,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     private final Ehcache cache;
     private final EhcacheXAResourceImpl recoveryResource;
 
-    /** 记录 Transaction 与对应 XAResource 之间的映射关系 */
+    /** 记录 Transaction 与对应 XAResource 之间的映射关系，每个事务绑定一个 XAResource */
     private final ConcurrentHashMap<Transaction, EhcacheXAResource> transactionToXAResourceMap = new ConcurrentHashMap<Transaction, EhcacheXAResource>();
     private final ConcurrentHashMap<Transaction, Long> transactionToTimeoutMap = new ConcurrentHashMap<Transaction, Long>();
 
@@ -148,8 +148,16 @@ public class XATransactionStore extends AbstractTransactionStore {
         if (xaResource == null) {
             LOG.debug("creating new XAResource");
             // 新建一个 XAResource 对象
-            xaResource = new EhcacheXAResourceImpl(cache, underlyingStore, transactionManagerLookup,
-                    softLockManager, transactionIdFactory, comparator, commitObserver, rollbackObserver, recoveryObserver);
+            xaResource = new EhcacheXAResourceImpl(
+                    cache,
+                    underlyingStore,
+                    transactionManagerLookup,
+                    softLockManager,
+                    transactionIdFactory,
+                    comparator,
+                    commitObserver,
+                    rollbackObserver,
+                    recoveryObserver);
             transactionToXAResourceMap.put(transaction, xaResource);
             // 注册一个 CleanupXAResource，用于在提交或回滚事务时清空当前 Transaction
             xaResource.addTwoPcExecutionListener(new CleanupXAResource(getCurrentTransaction()));
@@ -187,7 +195,7 @@ public class XATransactionStore extends AbstractTransactionStore {
     private XATransactionContext getOrCreateTransactionContext() {
         try {
             // 获取当前 Transaction 对应的 XAResource 对象
-            EhcacheXAResourceImpl xaResource = getOrCreateXAResource();
+            EhcacheXAResourceImpl xaResource = this.getOrCreateXAResource();
             // 获取对应的 XATransactionContext
             XATransactionContext transactionContext = xaResource.getCurrentTransactionContext();
 
@@ -497,8 +505,8 @@ public class XATransactionStore extends AbstractTransactionStore {
     public boolean put(Element element) throws CacheException {
         LOG.debug("cache {} put {}", cache.getName(), element);
         // this forces enlistment so the XA transaction timeout can be propagated to the XA resource
-        // 获取当前 Transaction 对应的上下文对象，期间会尝试注册 XAResource 到 TM
-        getOrCreateTransactionContext();
+        // 获取当前事务对应的上下文对象，期间会尝试注册 XAResource 到 TM
+        final XATransactionContext transactionContext = getOrCreateTransactionContext();
 
         // 获取 key 对应的旧值
         Element oldElement = getQuietFromUnderlyingStore(element.getObjectKey());

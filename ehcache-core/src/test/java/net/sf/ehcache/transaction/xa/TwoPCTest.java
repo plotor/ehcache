@@ -72,8 +72,10 @@ public class TwoPCTest {
     @Test
     public void testPut() throws Exception {
         clearAll();
+        // 创建一个事务上下文，并与当前调用线程关联
         transactionManager.begin();
         try {
+            // 将 PUT 操作包装成一个个的 Command 记录到事务上下文中
             xaCache1.put(new Element("name", "zhenchao"));
             xaCache2.put(new Element("name", "zhenchao"));
             transactionManager.commit();

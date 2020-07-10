@@ -66,7 +66,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
     /*
      * Global transactions support is implemented at the Store level, through XATransactionStore and JtaLocalTransactionStore.
      * The former decorates the underlying MemoryStore implementation, augmenting it with transaction isolation and two-phase
-     * commit support through an <XAResouce> implementation. The latter decorates a LocalTransactionStore-decorated cache to
+     * commit support through an <XAResource> implementation. The latter decorates a LocalTransactionStore-decorated cache to
      * make it controllable by the standard JTA API instead of the proprietary TransactionController API.
      *
      * During its initialization, the cache does a lookup of the Transaction Manager using the provided TransactionManagerLookup
@@ -131,7 +131,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
      */
     @Override
     public void start(Xid xid, int flag) throws XAException {
-        LOG.debug("start [{}] [{}]", xid, prettyPrintXAResourceFlags(flag));
+        LOG.debug("xa start [{}] [{}]", xid, prettyPrintXAResourceFlags(flag));
 
         if (currentXid != null) {
             throw new EhcacheXAException("resource already started on " + currentXid, XAException.XAER_PROTO);
@@ -159,7 +159,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
      */
     @Override
     public void end(Xid xid, int flag) throws XAException {
-        LOG.debug("end [{}] [{}]", xid, prettyPrintXAResourceFlags(flag));
+        LOG.debug("xa end [{}] [{}]", xid, prettyPrintXAResourceFlags(flag));
 
         if (currentXid == null) {
             throw new EhcacheXAException("resource not started on " + xid, XAException.XAER_PROTO);
@@ -258,13 +258,16 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
             throw new EhcacheXAException("transaction never started: " + xid, XAException.XAER_NOTA);
         }
 
+        // 这里对应单机环境用的是 TransactionIDFactoryImpl，创建 XidTransactionID，并设置事务状态为 IN_DOUBT
         XidTransactionID xidTransactionID = transactionIDFactory.createXidTransactionID(xid, cache);
 
+        // 获取当前 XAResource 范围内待执行的 Command 列表
         List<Command> commands = twopcTransactionContext.getCommands();
         List<Command> preparedCommands = new LinkedList<Command>();
 
         boolean prepareUpdated = false;
         LOG.debug("preparing {} command(s) for [{}]", commands.size(), xid);
+        // 遍历执行 Command
         for (Command command : commands) {
             try {
                 prepareUpdated |= command.prepare(underlyingStore, softLockManager, xidTransactionID, comparator);
@@ -311,6 +314,7 @@ public class EhcacheXAResourceImpl implements EhcacheXAResource {
      */
     public void commitInternal(Xid xid, boolean onePhase) throws XAException {
         commitObserver.begin();
+        // 此时，事务 ID 对应的事务状态为 IN_DOUBT
         XidTransactionID xidTransactionID = transactionIDFactory.createXidTransactionID(xid, cache);
         try {
             if (onePhase) {

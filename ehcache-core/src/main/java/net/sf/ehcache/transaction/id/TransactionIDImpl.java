@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TransactionIDImpl implements TransactionID {
 
+    private static final long serialVersionUID = -3337074766735236486L;
+
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
 
     private final int id;
@@ -38,6 +40,7 @@ public class TransactionIDImpl implements TransactionID {
 
     /**
      * Create a new TransactionIDImpl instance from an existing one
+     *
      * @param transactionId the transaction Id to copy
      */
     protected TransactionIDImpl(TransactionIDImpl transactionId) {

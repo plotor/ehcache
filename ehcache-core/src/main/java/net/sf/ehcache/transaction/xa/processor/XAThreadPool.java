@@ -35,9 +35,11 @@ public class XAThreadPool {
 
     /**
      * Reserve a thread from the pool
+     *
      * @return a MultiRunner which wraps the reserved thread
      */
     public synchronized MultiRunner getMultiRunner() {
+        // 新建一个 MultiRunner，并交由线程池执行，MultiRunner 本质上是一个 Runnable
         MultiRunner multiRunner = new MultiRunner();
         executor.submit(multiRunner);
         return multiRunner;
@@ -54,6 +56,7 @@ public class XAThreadPool {
      * Pooled thread wrapper which allows reuse of the same thread
      */
     public static final class MultiRunner implements Runnable {
+        // 控制 MultiRunner 线程和调用线程的执行步骤
         private final CyclicBarrier startBarrier = new CyclicBarrier(2);
         private final CyclicBarrier endBarrier = new CyclicBarrier(2);
         private volatile Callable callable;
@@ -66,9 +69,10 @@ public class XAThreadPool {
 
         /**
          * Execute a Callable on the wrapped thread and return its result
+         *
          * @param callable The Callable to execute
          * @return the Object returned by the Callable
-         * @throws ExecutionException thrown when something went wrong during execution
+         * @throws ExecutionException   thrown when something went wrong during execution
          * @throws InterruptedException thrown when the executing thread got interrupted
          */
         public Object execute(Callable callable) throws ExecutionException, InterruptedException {
@@ -82,8 +86,10 @@ public class XAThreadPool {
             try {
                 this.callable = callable;
                 this.exception = null;
+                // 触发 run 继续执行
                 startBarrier.await();
 
+                // 等待 run 执行完成
                 endBarrier.await();
                 if (exception != null) {
                     throw new ExecutionException("XA execution error", exception);
@@ -116,6 +122,7 @@ public class XAThreadPool {
         public void run() {
             try {
                 while (true) {
+                    // 当前线程等待其它线程调用 execute 方法
                     startBarrier.await();
 
                     if (callable != null) {
@@ -124,6 +131,7 @@ public class XAThreadPool {
                         } catch (Exception e) {
                             exception = e;
                         }
+                        // 触发执行 execute 的线程继续执行
                         endBarrier.await();
                     } else {
                         return;

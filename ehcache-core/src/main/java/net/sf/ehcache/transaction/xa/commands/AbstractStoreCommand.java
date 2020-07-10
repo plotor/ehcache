@@ -70,10 +70,14 @@ public abstract class AbstractStoreCommand implements Command {
      * {@inheritDoc}
      */
     @Override
-    public boolean prepare(Store store, SoftLockManager softLockManager,
+    public boolean prepare(Store store,
+                           SoftLockManager softLockManager,
                            XidTransactionID transactionId,
                            ElementValueComparator comparator) {
+        // 获取当前 KV 值对应的 key
         Object objectKey = getObjectKey();
+
+        // TODO by zhenchao 这一块的逻辑需要梳理一下
 
         SoftLockID softLockId = softLockManager.createSoftLockID(transactionId, objectKey, newElement, oldElement);
         SoftLock softLock = softLockManager.findSoftLockById(softLockId);

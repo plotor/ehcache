@@ -74,6 +74,7 @@ public class XARequestProcessor {
      * @throws XAException the XAException thrown by the XAResource
      */
     public int process(XARequest request) throws XAException {
+        // 获取 xid 对应的 MultiRunner，本质是一个 Runnable，如果不存在则创建一个
         XAThreadPool.MultiRunner multiRunner = getOrCreateThread(request.getXid());
 
         XAResponse xaResponse;
@@ -113,6 +114,7 @@ public class XARequestProcessor {
     private XAThreadPool.MultiRunner getOrCreateThread(Xid xid) {
         XAThreadPool.MultiRunner service = executorMap.get(xid);
         if (service == null) {
+            // 新建一个 MultiRunner，并提交给线程池执行
             service = xaProcessorPool.getMultiRunner();
             executorMap.put(xid, service);
         }
@@ -163,7 +165,6 @@ public class XARequestProcessor {
             XAException xaException = null;
             try {
                 switch (request.getRequestType()) {
-
                     case FORGET:
                         resourceImpl.forgetInternal(request.getXid());
                         break;
@@ -186,7 +187,8 @@ public class XARequestProcessor {
             } catch (XAException xaE) {
                 xaException = xaE;
             } catch (Throwable t) {
-                xaException = new EhcacheXAException("Some problem happened while processing xa request: " + request.getRequestType(),
+                xaException = new EhcacheXAException(
+                        "Some problem happened while processing xa request: " + request.getRequestType(),
                         XAException.XAER_RMERR, t);
             }
 

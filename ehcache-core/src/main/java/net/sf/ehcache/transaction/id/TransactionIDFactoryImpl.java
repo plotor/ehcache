@@ -57,6 +57,7 @@ public class TransactionIDFactoryImpl extends AbstractTransactionIDFactory {
     @Override
     public XidTransactionID createXidTransactionID(Xid xid, Ehcache cache) {
         XidTransactionID id = new XidTransactionIDImpl(xid, cache.getName());
+        // 标识当前事务状态
         getTransactionStates().putIfAbsent(id, Decision.IN_DOUBT);
         return id;
     }
