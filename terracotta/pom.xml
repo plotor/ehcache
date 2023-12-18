@@ -20,7 +20,7 @@
     <repositories>
         <repository>
             <id>terracotta-snapshots</id>
-            <url>http://www.terracotta.org/download/reflector/snapshots</url>
+            <url>https://www.terracotta.org/download/reflector/snapshots</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -30,7 +30,7 @@
         </repository>
         <repository>
             <id>terracotta-releases</id>
-            <url>http://www.terracotta.org/download/reflector/releases</url>
+            <url>https://www.terracotta.org/download/reflector/releases</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -43,7 +43,7 @@
     <pluginRepositories>
         <pluginRepository>
             <id>terracotta-snapshots</id>
-            <url>http://www.terracotta.org/download/reflector/snapshots</url>
+            <url>https://www.terracotta.org/download/reflector/snapshots</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -53,7 +53,7 @@
         </pluginRepository>
         <pluginRepository>
             <id>terracotta-releases</id>
-            <url>http://www.terracotta.org/download/reflector/releases</url>
+            <url>https://www.terracotta.org/download/reflector/releases</url>
             <releases>
                 <enabled>true</enabled>
             </releases>

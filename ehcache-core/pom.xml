@@ -558,7 +558,7 @@
     <repositories>
         <repository>
             <id>terracotta-snapshots</id>
-            <url>http://www.terracotta.org/download/reflector/snapshots</url>
+            <url>https://www.terracotta.org/download/reflector/snapshots</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -569,7 +569,7 @@
 
         <repository>
             <id>terracotta-releases</id>
-            <url>http://www.terracotta.org/download/reflector/releases</url>
+            <url>https://www.terracotta.org/download/reflector/releases</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -581,7 +581,7 @@
         <!--For Hibernate. Test only -->
         <repository>
             <id>jboss-releases</id>
-            <url>http://repository.jboss.org/nexus/content/groups/public-jboss</url>
+            <url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -593,7 +593,7 @@
         <!--For xsom. Test only -->
         <repository>
             <id>Java.net Maven 2</id>
-            <url>http://download.java.net/maven/2</url>
+            <url>https://download.java.net/maven/2</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -606,7 +606,7 @@
     <pluginRepositories>
         <pluginRepository>
             <id>terracotta-snapshots</id>
-            <url>http://www.terracotta.org/download/reflector/snapshots</url>
+            <url>https://www.terracotta.org/download/reflector/snapshots</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -616,7 +616,7 @@
         </pluginRepository>
         <pluginRepository>
             <id>terracotta-releases</id>
-            <url>http://www.terracotta.org/download/reflector/releases</url>
+            <url>https://www.terracotta.org/download/reflector/releases</url>
             <releases>
                 <enabled>true</enabled>
             </releases>

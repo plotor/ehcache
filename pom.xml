@@ -499,13 +499,13 @@
     <repository>
       <id>terracotta-snapshots</id>
       <url>
-        http://www.terracotta.org/download/reflector/snapshots
+        https://www.terracotta.org/download/reflector/snapshots
       </url>
     </repository>
     <repository>
       <id>terracotta-releases</id>
       <url>
-        http://www.terracotta.org/download/reflector/releases
+        https://www.terracotta.org/download/reflector/releases
       </url>
     </repository>
   </repositories>
@@ -513,13 +513,13 @@
     <pluginRepository>
       <id>terracotta-snapshots</id>
       <url>
-        http://www.terracotta.org/download/reflector/snapshots
+        https://www.terracotta.org/download/reflector/snapshots
       </url>
     </pluginRepository>
     <pluginRepository>
       <id>terracotta-releases</id>
       <url>
-        http://www.terracotta.org/download/reflector/releases
+        https://www.terracotta.org/download/reflector/releases
       </url>
     </pluginRepository>
   </pluginRepositories>
